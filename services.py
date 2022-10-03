@@ -3,7 +3,7 @@ from api.services.auth0 import Auth0ManagmentAPI
 from api.services.base_service import BaseService
 from rest_framework.exceptions import *
 
-#Contains all base methods for all model services
+#Contains all base  for all model services
 class BaseService:
     
     #validates user can create resource for organization passed in request body
@@ -109,9 +109,7 @@ class UserService(BaseService):
 from django.db.models import Q
 from django.db import transaction
 from rest_framework.exceptions import *
-from api.models import Organization, User, Goal, OrganizationMembership
-#from api.statistics import *
-from api.services.weight_data import WeightDataService
+from api.models import Organization, User, OrganizationMembership
 from api.services.base_service import BaseService
 import requests
 
@@ -187,7 +185,7 @@ class OrganizationService(BaseService):
             try:
                 pass
                 #*** get correct the url
-                #requests.get("https://insight.methodrecycling.com/jobs/remove-users", timeout=0.0000000001)
+                #requests.get("yourdomain.com/jobs/remove-users", timeout=0.0000000001)
             except requests.exceptions.ReadTimeout: 
                 pass
 
@@ -202,7 +200,7 @@ from django.db.models import Q
 from itsdangerous import Serializer
 from django.template.loader import render_to_string
 from django.template.loader import render_to_string
-from api.models import Organization, User, OrganizationMembership, Tag
+from api.models import Organization, User, OrganizationMembership
 from api.services.auth0 import Auth0ManagmentAPI
 from django.contrib.auth.models import User, Group
 from api.services.base_service import BaseService
@@ -315,10 +313,10 @@ class OrganizationMembershipService(BaseService):
         message = render_to_string('invite_email.html', {
             'sender_name': sender_name, 
             'sender_email': sender_email, 
-            'domain': 'methodrecycling.com',
+            'domain': 'yourdomain.com',
             'token': token
         })
-        email = EmailMessage(subject='Method InSight Invite', body=message, to=[to_email],from_email='"Method Recycling" <no-reply@methodrecycling.com>')
+        email = EmailMessage(subject='Your App Invite', body=message, to=[to_email],from_email='"Your App" <no-reply@yourdomain.com>')
         email.content_subtype = "html"
         email.send(fail_silently=False)
 
