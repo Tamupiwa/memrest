@@ -21,12 +21,14 @@ class BaseAccessPolicy:
             implicitly_permissed_orgs = utilities.downstream_orgs(permissed_orgs)
             permissed_orgs += implicitly_permissed_orgs
 
-        #if permissed queryset is only being sought for one organization (list )
-        #only return that organization from users permissed organizations
+        #if permissed queryset is only being sought for a set of organizations (list )
+        #only return resources for that set of organizations from users permissed organizations
         if organization_id:
-            permissed_orgs = [p for p in permissed_orgs if p == organization_id]
+            #incase it a comma seperated with more than one value
+            organization_ids = str(organization_id).split(',')
+            permissed_orgs = [p for p in permissed_orgs if p in organization_ids]
         
-        return permissed_orgs
+        return list(permissed_orgs)
     
     def permissioned_organizations_by_role(self, request, action):
         permissioned_orgs = []
@@ -46,27 +48,8 @@ class BaseAccessPolicy:
                     permissioned_orgs.append(org_id)
 
         return permissioned_orgs
-      
- 
-#all role based policies for organizations
-class OrganizationsAccessPolicy(AccessPolicy, BaseAccessPolicy):
-    statements = [
-         {
-            "action": ["*"],
-            "principal": ["group:admin"],
-            "effect": "allow"
-        },
-        {
-            "action": ["retrieve"],
-            "principal": ["group:user],
-            "effect": "allow"
-        },
 
-    ]
-    def scope_queryset(self, request, role_scoped, action=None, organization_id=None):
-        permissed_orgs = self.get_permissioned_organizations(request, role_scoped, action, organization_id)
-        organizations = Organization.objects.filter(id__in=permissed_orgs)
-        return organizations
+ 
 
 
 #all role based policies for Organization users
