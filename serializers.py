@@ -12,7 +12,7 @@ class OrganizationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Organization
-        fields = ('id', 'name', 'employees', 'country', 'city', 'field',
+        fields = ('id', 'name', 'employees', 'industry', 'country', 'city', 'field',
                 'timezone', 'subscription_plan',)
         read_only_fields = ('id','subscription_plan','date_created')
 
@@ -27,16 +27,15 @@ class OrganizationUpdateSerializer(serializers.Serializer):
     employees = serializers.BooleanField(required=False)
     country = serializers.CharField(required=False)
     city = serializers.CharField(required=False)
-    field = serializers.CharField(required=False)
+    industry = serializers.CharField(required=False)
     timezone = serializers.CharField(required=False)
 
     def update(self, organization_id, validated_data):
         service = self.context['service']
         instance = service.update(organization_id, validated_data)
         return instance
-      
- 
 
+   
 #serializer for returned data when retrieving or creating a single user
 class UserSerializer(serializers.ModelSerializer):
     memberships = serializers.ListField(child=OrganizationMembershipSerializer())
