@@ -13,8 +13,16 @@ class BaseService:
             raise NotFound('Organization not found')
             
 
+
+from api.models import OrganizationMembership, User, Organization
+from api.utilities.auth0 import Auth0ManagmentAPI
+from api.services.base_service import BaseService
+from rest_framework.exceptions import APIException, NotFound, PermissionDenied
+from django.db import transaction
+import os
 '''
 Handles logic for the user endpoint
+
 '''
 class UserService(BaseService):
     def __init__(self, request=None, queryset=None, permissed_orgs=None):
@@ -45,7 +53,7 @@ class UserService(BaseService):
             return False
             
         user = self.scoped_queryset.filter(id=user_id)
-        if user.exits():
+        if user.exists():
             return user[0]
         else:
             return False
@@ -54,13 +62,15 @@ class UserService(BaseService):
     def get_or_raise(self, user_id):
         user = self.get(user_id)
         if not user:
-            raise NotFound()
+            raise NotFound('User not found.')
         
         return user
 
     def update(self, user_id, validated_data):
-        for key, value in validate_data.items():
+        instance = self.get_or_raise(user_id)
+        for key, value in validated_data.items():
             setattr(instance, key, value)
+
         instance.save()
         return instance
 
@@ -68,7 +78,7 @@ class UserService(BaseService):
     def delete(self, user_id):
         with transaction.atomic():
             #validate user exists
-            self.get_or_raise(user_id)
+            user = self.get_or_raise(user_id)
             #validates user isnt the sole admin in any of their organizations, 
             # if they are do not allow user to be deleted until they asign admin to someone else or if 
             # the entire organization is being deleted (archived)
@@ -81,7 +91,8 @@ class UserService(BaseService):
     
     #checks if user is within an organization that is archived
     def unarchived_queryset(self, queryset):
-        return queryset.filter(organizations__archived=False)
+        archived_orgs_users = User.objects.filter(organizations__archived=True).values_list('id', flat=True)
+        return queryset.exclude(id__in=archived_orgs_users)
 
     #returns all organizations
     def all_organizations(self, user_id):
@@ -104,6 +115,7 @@ class UserService(BaseService):
                 if admin_membership.filter(organization__archived__is_null=True) and total_org_admins == 1:
                     raise PermissionDenied()
 
+ 
 
 
 from django.db.models import Q
