@@ -44,29 +44,22 @@ class BaseAccessPolicy:
 
         return permissioned_orgs
 
- 
+#--------------- Organizations --------------------
 
 
-#all role based policies for Organization users
-class OrganizationMembershipsAccessPolicy(AccessPolicy, BaseAccessPolicy):
+#all role based policies for organizations
+class OrganizationsAccessPolicy(AccessPolicy, BaseAccessPolicy):
     statements = [
         {
             "action": ["*"],
-            "principal": ["group:admin"],
+            "principal": ['group:Admin'],
             "effect": "allow"
-        },
-        {
-            "action": ["retrieve"],
-            "principal": ["group:user"],
-            "effect": "allow"
-        },
-
+        }
     ]
     def scope_queryset(self, request, role_scoped, action=None, organization_id=None):
-        permissed_orgs = self.get_permissioned_organizations(request, role_scoped, action, organization_id)    
-        organization_members = OrganizationMembership.filter(organization__id=permissed_orgs)
-        return organization_members
-
+        permissed_orgs = self.get_permissioned_organizations(request, role_scoped, action, organization_id)
+        organizations = Organization.objects.filter(id__in=permissed_orgs)
+        return organizations
 
 # -------------- Users ---------------------
 
@@ -91,3 +84,25 @@ class UserUpdateSerializer(serializers.Serializer):
         service = self.context['service']
         instance = service.update(user_id, validated_data)
         return instance
+ 
+#--------------- Memberships -----------------------
+
+#all role based policies for Organization users
+class OrganizationMembershipsAccessPolicy(AccessPolicy, BaseAccessPolicy):
+    statements = [
+        {
+            "action": ["*"],
+            "principal": ["group:admin"],
+            "effect": "allow"
+        },
+        {
+            "action": ["retrieve"],
+            "principal": ["group:user"],
+            "effect": "allow"
+        },
+
+    ]
+    def scope_queryset(self, request, role_scoped, action=None, organization_id=None):
+        permissed_orgs = self.get_permissioned_organizations(request, role_scoped, action, organization_id)    
+        organization_members = OrganizationMembership.filter(organization__id=permissed_orgs)
+        return organization_members
