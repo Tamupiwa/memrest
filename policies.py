@@ -2,6 +2,7 @@ from api.models import *
 from rest_access_policy import AccessPolicy
 from api.utilities import utilities
 
+#NOTE: 'Admin' and 'user' groups must be created in Django.contrib.auth.Group model and assigned to users to allow this to work
 class BaseAccessPolicy:
 
     def get_permissioned_organizations(self, request, role_scoped, action=None, organization_id=None):
@@ -12,14 +13,8 @@ class BaseAccessPolicy:
             permissed_orgs = OrganizationMembership.objects.filter(user__id=request.user.id).values_list('organization__id', flat=True)
 
         #if user is a system admin give them permission for all organization resources
-        if OrganizationMembership.objects.filter(user_id=request.user.id, role="System admin"):
+        if OrganizationMembership.objects.filter(user_id=request.user.id, role="Admin"):
             permissed_orgs = Organization.objects.values_list('id', flat=True)
-
-        api_config = APIConfig.objects.latest('start_date')
-        #if hiearchal resource management is enabled get orgs down hiearchy of each org user is a member 
-        if api_config.cross_org_resource_management:
-            implicitly_permissed_orgs = utilities.downstream_orgs(permissed_orgs)
-            permissed_orgs += implicitly_permissed_orgs
 
         #if permissed queryset is only being sought for a set of organizations (list )
         #only return resources for that set of organizations from users permissed organizations
