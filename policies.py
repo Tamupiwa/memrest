@@ -63,27 +63,21 @@ class OrganizationsAccessPolicy(AccessPolicy, BaseAccessPolicy):
 
 # -------------- Users ---------------------
 
-#serializer for returned data when retrieving or creating a single user
-class UserSerializer(serializers.ModelSerializer):
+#all role based policies for Users
+class UsersAccessPolicy(AccessPolicy, BaseAccessPolicy):
+    statements = [
+        {
+            "action": ["*"],
+            "principal": ["group:System admin", "group:Support", "group:Facility manager",  "group:Organization admin"],
+            "effect": "allow"
+        },
 
-    class Meta:
-        model = User
-        fields = ('id', 'first_name', 'last_name', 'timezone', 'email', 'is_active', 'date_joined')
-        read_only_fields = ('id', 'is_active', 'date_joined')
-
-
-
-#serializer for returned data when retrieving or creating a single user
-class UserUpdateSerializer(serializers.Serializer):
-    first_name = serializers.CharField(required=False)
-    last_name = serializers.CharField(required=False)
-    timezone = serializers.CharField(required=False)
-    email = serializers.CharField(required=False)
-    
-    def update(self, user_id, validated_data):
-        service = self.context['service']
-        instance = service.update(user_id, validated_data)
-        return instance
+    ]
+    def scope_queryset(self, request, role_scoped, action=None, organization_id=None):
+        permissed_orgs = self.get_permissioned_organizations(request, role_scoped, action, organization_id)
+        user_ids = set(OrganizationMembership.objects.filter(organization__id__in=permissed_orgs).values_list('user__id', flat=True))
+        users = User.objects.filter(id__in=user_ids)
+        return users
  
 #--------------- Memberships -----------------------
 
