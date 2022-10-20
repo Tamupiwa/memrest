@@ -169,4 +169,3 @@ class OrganizationMembershipViewSet(AccessViewSetMixin, PermissionedModelViewSet
         service = services.users.UserService(self.request, queryset)
         service.delete(pk)
         return Response(status=204, content_type='application/json')
-
