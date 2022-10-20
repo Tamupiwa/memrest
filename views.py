@@ -77,91 +77,56 @@ class OrganizationsViewSet(AccessViewSetMixin, ModelViewSet_):
         service.delete(pk)
         return Response(status=204, content_type='application/json')
 
-    #*** 
-    #returns dashboard data for an organization
-    def dasbboard_data(self, request):        
-        queryset = self.get_queryset(request, 'dashboard_data')
-        service = services.organizations.Organizations(self.request, queryset)
-        serializer = serializers.RequestDashboardSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        data = service.get_dashboard_data(pk)
-        data = serializers.DashboardDataSerializer(data).data
-        return Response(data, status=200, content_type='application/json')
-
-    #returns dashboard data for an organization
-    def dummy_dasbboard_data(self, request):
-        queryset = self.get_queryset(request, 'dummy_dashboard_data')
-        service = services.organizations.Organizations(self.request, queryset)
-        serializer.is_valid(raise_exception=True)
-        data = service.get_dummy_dashboard_data()
-        data = serializers.DashboardDataSerializer(data).data
-        return Response(data, status=200, content_type='application/json')
-    
-    def Reassign_facility_manager(self):
-        pass
 
 #endpoint for managing organization memberships (relationships between an organization and its users. organization/<id>/users/<id )
-class OrganizationMembershipViewSet(AccessViewSetMixin, ModelViewSet_):
+class OrganizationMembershipViewSet(AccessViewSetMixin, PermissionedModelViewSet):
     access_policy = OrganizationMembershipsAccessPolicy
             
     #lists all users in the organization and their organizational meta data
     def list(self, request):
-        #get all organization users
+        #get all memberships
         serializer = serializers.GenericListSerializer(data=request.query_params)
         serializer.is_valid(raise_exception=True)
         organization_id = serializer.validated_data.get('organization_id')
-        user_id = serializer.validated_data.get('user_id')
         queryset = self.get_queryset(request, 'list', organization_id)
-        service = services.organization_users.OrganizationsUsers(self.request, queryset)
-        organization_users = service.all(organization_id, user_id)
-        data = OrganizationsUsersSerializer(organization_users, many=True)
+        service = services.organization_memberships.OrganizationMembershipService(self.request, queryset)
+        memberships = service.all(serializer.validated_data)
+        data = serializers.OrganizationMembershipSerializer(memberships, many=True).data
         return Response(data, status=200, content_type='application/json')
 
-    #retrieves a organization
+    #creates organization membership and sends an invite email to the user
+    def create(self, request):
+        queryset = self.get_queryset(request, 'send_invite')
+        service = services.organization_memberships.OrganizationMembershipService(self.request, queryset)
+        serializer = serializers.SendInviteSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        service.send_invite(serializer.validated_data)
+        return Response(status=204, content_type='application/json')
+
+    #retrieves a organization membership
     def retrieve(self, request, pk):
         queryset = self.get_queryset(request, 'retrieve')
-        service = services.organization_users.OrganizationsUsers(self.request, queryset)
+        service = services.organization_memberships.OrganizationMembershipService(self.request, queryset)
         #gets organization and validates user belongs to organization
-        organization_user = service.get_or_raise(pk)
-        data = OrganizationMembershipSerializer(organization_user).data
+        membership = service.get_or_raise(pk)
+        data = serializers.OrganizationMembershipSerializer(membership).data
         return Response(data, status=200, content_type='application/json')
     
-    #updates an existing organization
+    #updates an existing organization membership
     def update(self, request, pk):
         queryset = self.get_queryset(request, 'update')
-        service = services.organization_users.OrganizationsUsers(self.request, queryset)
-        serializer = serializers.OrganizationMemberSerializer(data=request.data, contex={'service': service})
+        service = services.organization_memberships.OrganizationMembershipService(self.request, queryset)
+        serializer = serializers.OrganizationMembershipUpdateSerializer(data=request.data, context={'service': service})
         serializer.is_valid(raise_exception=True)
-        serializer.update()
+        serializer.update(pk, serializer.validated_data)
         return Response(status=204, content_type='application/json')
 
-    #removes a user from an organization
-    def destroy(self, id=None):
-        queryset = self.get_queryset(request, 'send_invitation')
-        service = service.organization_users.OrganizationsUsers(self.request, queryset)
+    #removes a user from an organization membership
+    def destroy(self, request, pk):
+        queryset = self.get_queryset(request, 'retrieve')
+        service = services.organization_memberships.OrganizationMembershipService(self.request, queryset)
         service.delete(pk)
         return Response(status=204, content_type='application/json')
-
-    @action(detail=False, methods=['POST'])
-    def send_invitation(self, request):
-        queryset = self.get_queryset(request, 'send_invitation')
-        service = services.organization_users.OrganizationsUsers(self.request, queryset)
-        serializer = serializers.serializer.SendInviteSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        service.send_invite()
-        return Response(status=204, content_type='application/json')
-    
-    @action(detail=False, methods=['GET'])
-    def activate_invite(self, request, token):
-        queryset = self.get_queryset(request, UserViewSet, 'activate_invitation')
-        service = services.users.Users(self.request, queryset)
-        user = service.activate_invitation(token=token)
-        #get the password reset link token url from auth0
-        client_id = os.environ.get('auth0_client_id')
-        client_secret = os.environ.get('auth0_client_secret')
-        ath = services.auth0.Auth0ManagmentAPI(client_id, client_secret)
-        invite_redirect = ath.get_passsword_reset_url_by_id(user.auth0_id, invite_url=True)
-        return HttpResponseRedirect(redirect_to=invite_redirect)
 
 #endpoint for managing users
 class UserViewSet(AccessViewSetMixin, ModelViewSet_):
