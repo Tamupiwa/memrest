@@ -62,7 +62,7 @@ class OrganizationMembershipsAccessPolicy(AccessPolicy, BaseAccessPolicy):
         },
         {
             "action": ["retrieve"],
-            "principal": ["group:user],
+            "principal": ["group:user"],
             "effect": "allow"
         },
 
