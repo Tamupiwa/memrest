@@ -80,5 +80,5 @@ class UsersAccessPolicy(AccessPolicy, BaseAccessPolicy):
     ]
     def scope_queryset(self, request, role_scoped, action=None, organization_id=None):
         permissed_orgs = self.get_permissioned_organizations(request, role_scoped, action, organization_id)
-        users = User.objects.filter(organizations__id__in=permissed_orgs)
+        users = list(set(User.objects.filter(organizations__id__in=permissed_orgs)))
         return users
