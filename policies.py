@@ -2,6 +2,24 @@ from api.models import *
 from rest_access_policy import AccessPolicy
 from api.utilities import utilities
 
+
+'''
+All permissions pertaining to role access policies for each endpoint
+Permissions are deny by default. Any deny effect overides all the allow effects.
+IMPORTANT: We use a whitelisting as the design philosphy for declaring permissions. Furthermore, 
+- meaning only 'allow' statements should be declared since permission is deny by default. 
+- Only permission groups should be defined as principals in each policy statement. 
+- All statement actions and principals should be lists
+- * delimeter to include all actions should only be used with the assumption that new methods
+will be added to the viewset in the future otherwise each action should be explicitly listed
+ 
+If this isnt followed the entire permissions system breaks
+Available permissions groups: 
+    - Admin
+    - User
+
+'''
+
 #NOTE: 'Admin' and 'user' groups must be created in Django.contrib.auth.Group model and assigned to users to allow this to work
 class BaseAccessPolicy:
 
