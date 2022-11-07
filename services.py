@@ -21,8 +21,6 @@ class BaseService:
         if organization_id not in self.permissed_orgs:
             raise NotFound('Organization not found')
             
-
-
 '''
 Handles logic for the user endpoint
 
