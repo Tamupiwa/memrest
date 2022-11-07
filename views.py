@@ -27,8 +27,6 @@ class ModelViewSet_(viewsets.ModelViewSet):
             action=action,
             role_scoped=True,
             organization_id=organization_id)
-      
-
 
 #endpoint for managing organizations
 class OrganizationsViewSet(AccessViewSetMixin, ModelViewSet_):
@@ -127,7 +125,6 @@ class OrganizationMembershipViewSet(AccessViewSetMixin, PermissionedModelViewSet
         service = services.organization_memberships.OrganizationMembershipService(self.request, self.queryset)
         service.delete(pk)
         return Response(status=204, content_type='application/json')
-
 
     
  class UsersViewSet(AccessViewSetMixin, PermissionedModelViewSet):
