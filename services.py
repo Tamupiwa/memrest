@@ -1,7 +1,16 @@
 from api.models import OrganizationMembership, User, Organization
 from api.services.auth0 import Auth0ManagmentAPI
-from api.services.base_service import BaseService
 from rest_framework.exceptions import *
+from django.db import transaction
+from django.db.models import Q
+from django.db import transaction
+from django.db.models import Q
+from itsdangerous import Serializer
+from django.template.loader import render_to_string
+from django.template.loader import render_to_string
+from django.contrib.auth.models import User, Group
+import requests
+import os
 
 #Contains all base  for all model services
 class BaseService:
@@ -14,12 +23,6 @@ class BaseService:
             
 
 
-from api.models import OrganizationMembership, User, Organization
-from api.utilities.auth0 import Auth0ManagmentAPI
-from api.services.base_service import BaseService
-from rest_framework.exceptions import APIException, NotFound, PermissionDenied
-from django.db import transaction
-import os
 '''
 Handles logic for the user endpoint
 
@@ -115,15 +118,6 @@ class UserService(BaseService):
                 if admin_membership.filter(organization__archived__is_null=True) and total_org_admins == 1:
                     raise PermissionDenied()
 
- 
-
-
-from django.db.models import Q
-from django.db import transaction
-from rest_framework.exceptions import *
-from api.models import Organization, User, OrganizationMembership
-from api.services.base_service import BaseService
-import requests
 
 class OrganizationService(BaseService):
     def __init__(self, request=None, queryset=None, permissed_orgs=None):
@@ -205,17 +199,7 @@ class OrganizationService(BaseService):
     #returns unarchived organization(s) from scoped queryset
     def unarchived_queryset(self, queryset):
         return queryset.filter(archived=False)
-
-
-
-from django.db.models import Q
-from itsdangerous import Serializer
-from django.template.loader import render_to_string
-from django.template.loader import render_to_string
-from api.models import Organization, User, OrganizationMembership
-from api.services.auth0 import Auth0ManagmentAPI
-from django.contrib.auth.models import User, Group
-from api.services.base_service import BaseService
+    
 
 class OrganizationMembershipService(BaseService):
     def __init__(self, request=None, queryset=None, permissed_orgs=None):
