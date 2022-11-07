@@ -72,6 +72,62 @@ class UserManager(BaseUserManager):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
 
+class Organization(models.Model):
+    subscription_choices = (
+        ('Business', 'Business'),
+        ('Enterprise', 'Enterprise')
+    )
+    id = models.CharField(default=uuid.uuid4, primary_key=True, unique=True, max_length=255)
+    name = models.CharField(max_length=50)
+    #number of employees
+    employees = models.CharField(blank=True, null=True, max_length=7)
+    country = models.CharField(max_length=255)
+    #industry
+    industry = models.CharField(choices=industry_choices, max_length=255)
+    is_facility_manager = models.BooleanField(default=False)
+    #default timezone for whole orgainization. This is set as the first admin users
+    #.. timezone at account creation
+    timezone = models.CharField(choices=timezone_choices, max_length=255)
+    subscription_plan = models.CharField(choices=subscription_choices, max_length=100)
+    #should user be included in the external leaderboard 
+    #.. (this will allow other organizations to see their waster diversion data on the leaderboard)
+    #.. a organizarion with this setting disabled will not be able to see leaderboards consisting of other organizations
+    external_leaderboard_enabled = models.BooleanField(default=False)
+    stripe_id = models.CharField(max_length=100)
+    #if the organizations InSight is deleted this will be set to true
+    archived = models.BooleanField(default=False)
+    archived_date = models.DateField(blank=True, null=True)
+    #the organizations facilities manager
+    facility_manager = models.ForeignKey('self', on_delete=models.PROTECT, blank=True, null=True)
+    organization_groups = models.ManyToManyField('OrganizationGroup', through='OrganizationGroupMembership')
+    date_created = models.DateField(default=dt.datetime.utcnow)
+
+class OrganizationMembership(models.Model):
+    role_choices = (
+        ('System admin', 'System admin'),
+        ('Installer', 'Installer'),
+        ('Manufacturer', 'Manufacturer'),
+        ('Organization admin', 'Organization admin'),
+        ('Facility manager', 'Facility manager'),
+        ('Organization user', 'Organization user'),
+        ('Support', 'Support')
+    )
+    id = models.CharField(default=uuid.uuid4, primary_key=True, unique=True, max_length=255)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    organization = models.ForeignKey('Organization', on_delete=models.CASCADE)
+    role = models.CharField(choices=role_choices, max_length=18)
+    #layout for users dashboard for their organization
+    dashboard_layout = models.JSONField(blank=True, null=True)
+    #date user was invited to organization
+    invite_date = models.DateField(default=dt.datetime.utcnow)
+    is_key_contact = models.BooleanField(default=False)
+    #is the organization member an internal member of the organization (an employee)
+    is_external = models.BooleanField()
+    #the date the membership expires
+    expires = models.DateField(blank=True, null=True)
+    date_created = models.DateField(default=dt.datetime.utcnow)
+ 
+
 industry_choices = (
     ('Accounting ', 'Accounting '),
     ('Airlines/Aviation', 'Airlines/Aviation'),
@@ -221,57 +277,3 @@ industry_choices = (
     ('Wireless', 'Wireless'),
     ('Writing/Editing', 'Writing/Editing')
 )
-class Organization(models.Model):
-    subscription_choices = (
-        ('Business', 'Business'),
-        ('Enterprise', 'Enterprise')
-    )
-    id = models.CharField(default=uuid.uuid4, primary_key=True, unique=True, max_length=255)
-    name = models.CharField(max_length=50)
-    #number of employees
-    employees = models.CharField(blank=True, null=True, max_length=7)
-    country = models.CharField(max_length=255)
-    #industry
-    industry = models.CharField(choices=industry_choices, max_length=255)
-    is_facility_manager = models.BooleanField(default=False)
-    #default timezone for whole orgainization. This is set as the first admin users
-    #.. timezone at account creation
-    timezone = models.CharField(choices=timezone_choices, max_length=255)
-    subscription_plan = models.CharField(choices=subscription_choices, max_length=100)
-    #should user be included in the external leaderboard 
-    #.. (this will allow other organizations to see their waster diversion data on the leaderboard)
-    #.. a organizarion with this setting disabled will not be able to see leaderboards consisting of other organizations
-    external_leaderboard_enabled = models.BooleanField(default=False)
-    stripe_id = models.CharField(max_length=100)
-    #if the organizations InSight is deleted this will be set to true
-    archived = models.BooleanField(default=False)
-    archived_date = models.DateField(blank=True, null=True)
-    #the organizations facilities manager
-    facility_manager = models.ForeignKey('self', on_delete=models.PROTECT, blank=True, null=True)
-    organization_groups = models.ManyToManyField('OrganizationGroup', through='OrganizationGroupMembership')
-    date_created = models.DateField(default=dt.datetime.utcnow)
-
-class OrganizationMembership(models.Model):
-    role_choices = (
-        ('System admin', 'System admin'),
-        ('Installer', 'Installer'),
-        ('Manufacturer', 'Manufacturer'),
-        ('Organization admin', 'Organization admin'),
-        ('Facility manager', 'Facility manager'),
-        ('Organization user', 'Organization user'),
-        ('Support', 'Support')
-    )
-    id = models.CharField(default=uuid.uuid4, primary_key=True, unique=True, max_length=255)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    organization = models.ForeignKey('Organization', on_delete=models.CASCADE)
-    role = models.CharField(choices=role_choices, max_length=18)
-    #layout for users dashboard for their organization
-    dashboard_layout = models.JSONField(blank=True, null=True)
-    #date user was invited to organization
-    invite_date = models.DateField(default=dt.datetime.utcnow)
-    is_key_contact = models.BooleanField(default=False)
-    #is the organization member an internal member of the organization (an employee)
-    is_external = models.BooleanField()
-    #the date the membership expires
-    expires = models.DateField(blank=True, null=True)
-    date_created = models.DateField(default=dt.datetime.utcnow)
