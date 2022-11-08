@@ -20,7 +20,7 @@ class ModelViewSet_(viewsets.ModelViewSet):
             role_scoped=True,
             organization_id=organization_id)
 
-    #used to get organizations user has permmission to create new resources
+    #used to get organizations user has permmission to access and edit resources for
     def permissed_orgs(self, request, action, organization_id=None):
         return self.access_policy().get_permissioned_organizations(
             request=request, 
