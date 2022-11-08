@@ -3,6 +3,6 @@ Memrest is a barebones Django REST API that allows you to quickly get a Django a
 
 Memrest uses a layered design so all permissioning, business logic, Models/Data are seperated in different layers 
 
-Serializer -> Access Policy -> Viewset -> Service -> Model 
+Serializer -> Access Policy -> Scoped Queryset --> Viewset -> Service -> Model 
 
 This design template allows for developers to build REST API's while maintaining a seperation of concerns for all layers of code.
