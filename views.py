@@ -28,6 +28,47 @@ class ModelViewSet_(viewsets.ModelViewSet):
             role_scoped=True,
             organization_id=organization_id)
 
+    
+ class UsersViewSet(AccessViewSetMixin, PermissionedModelViewSet):
+    
+    access_policy = UsersAccessPolicy
+
+    #lists all the streams of the users organization 
+    def list(self, request):
+        serializer = serializers.GenericListSerializer(data=request.query_params)
+        serializer.is_valid(raise_exception=True)
+        organization_id = serializer.validated_data.get('organization_id')
+        self.queryset = self.get_queryset(request, 'list', organization_id=organization_id)
+        service = services.users.UserService(self.request, self.queryset)
+        #get all users organizatins 
+        users = service.all()
+        data = serializers.UserSerializer(users, many=True).data
+        return Response(data, status=200, content_type='application/json')
+
+    #retrieves a user
+    def retrieve(self, request, pk):
+        self.queryset = self.get_queryset(request, 'retrieve')
+        service = services.users.UserService(self.request, self.queryset)
+        user = service.get_or_raise(pk)
+        data = serializers.UserSerializer(user).data
+        return Response(data, status=200, content_type='application/json')
+    
+    #updates an existing user
+    def update(self, request, pk):
+        self.queryset = self.get_queryset(request, 'update')
+        service = services.users.UserService(self.request, self.queryset)
+        serializer = serializers.UserUpdateSerializer(data=request.data, context={"service": service})
+        serializer.is_valid(raise_exception=True)
+        serializer.update(pk, serializer.validated_data)
+        return Response(status=204, content_type='application/json')
+    
+    #deletes a user
+    def destroy(self, request, pk):
+        self.queryset = self.get_queryset(request, 'destroy')
+        service = services.users.UserService(self.request, self.queryset)
+        service.delete(pk)
+        return Response(status=204, content_type='application/json')
+    
 #endpoint for managing organizations
 class OrganizationsViewSet(AccessViewSetMixin, ModelViewSet_):
     access_policy = OrganizationsAccessPolicy
@@ -126,43 +167,3 @@ class OrganizationMembershipViewSet(AccessViewSetMixin, PermissionedModelViewSet
         service.delete(pk)
         return Response(status=204, content_type='application/json')
 
-    
- class UsersViewSet(AccessViewSetMixin, PermissionedModelViewSet):
-    
-    access_policy = UsersAccessPolicy
-
-    #lists all the streams of the users organization 
-    def list(self, request):
-        serializer = serializers.GenericListSerializer(data=request.query_params)
-        serializer.is_valid(raise_exception=True)
-        organization_id = serializer.validated_data.get('organization_id')
-        self.queryset = self.get_queryset(request, 'list', organization_id=organization_id)
-        service = services.users.UserService(self.request, self.queryset)
-        #get all users organizatins 
-        users = service.all()
-        data = serializers.UserSerializer(users, many=True).data
-        return Response(data, status=200, content_type='application/json')
-
-    #retrieves a user
-    def retrieve(self, request, pk):
-        self.queryset = self.get_queryset(request, 'retrieve')
-        service = services.users.UserService(self.request, self.queryset)
-        user = service.get_or_raise(pk)
-        data = serializers.UserSerializer(user).data
-        return Response(data, status=200, content_type='application/json')
-    
-    #updates an existing user
-    def update(self, request, pk):
-        self.queryset = self.get_queryset(request, 'update')
-        service = services.users.UserService(self.request, self.queryset)
-        serializer = serializers.UserUpdateSerializer(data=request.data, context={"service": service})
-        serializer.is_valid(raise_exception=True)
-        serializer.update(pk, serializer.validated_data)
-        return Response(status=204, content_type='application/json')
-    
-    #deletes a user
-    def destroy(self, request, pk):
-        self.queryset = self.get_queryset(request, 'destroy')
-        service = services.users.UserService(self.request, self.queryset)
-        service.delete(pk)
-        return Response(status=204, content_type='application/json')
