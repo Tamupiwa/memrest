@@ -6,7 +6,7 @@ Memrest uses a layered design so all permissioning, business logic, Models/Data 
 
 ***Serializer -> Access Policy -> Models/Scoped Queryset --> Viewset -> Service***
 
-This design template allows for developers to build REST API's while maintaining a seperation of concerns for all layers of code.
+This design template allows anyone to build REST API's while maintaining a seperation of concerns for all layers of code.
 
 ## Dependencies
 - django
