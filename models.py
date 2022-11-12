@@ -53,7 +53,7 @@ class UserManager(BaseUserManager):
 
         return self._create_user(email, password, **extra_fields)
 
-    class User(AbstractBaseUser, PermissionsMixin):
+class User(AbstractBaseUser, PermissionsMixin):
     id = models.CharField(default=uuid.uuid4, primary_key=True, unique=True, max_length=255)
     auth0_id = models.CharField(unique=True, max_length=255)
     email = models.EmailField(validators=[validate_email], unique=True)
