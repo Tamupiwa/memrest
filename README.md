@@ -15,4 +15,5 @@ This design template allows anyone to build REST API's while maintaining a seper
 - pytest-django
 - auth0-python
 - drf-nested-routers
+- Authlib
 
