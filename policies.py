@@ -74,6 +74,8 @@ class OrganizationsAccessPolicy(AccessPolicy, BaseAccessPolicy):
             "effect": "allow"
         }
     ]
+    #A scoped querset returns the resources (organizations in this case) that a user has access to 
+    #based on the organizations they have access to the resources determined by their memberships and endpoints group permissionss 
     def scope_queryset(self, request, role_scoped, action=None, organization_id=None):
         permissed_orgs = self.get_permissioned_organizations(request, role_scoped, action, organization_id)
         organizations = Organization.objects.filter(id__in=permissed_orgs)
