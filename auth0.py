@@ -1,12 +1,29 @@
+import pprint
+import json
 from auth0.v3.authentication import GetToken
 from auth0.v3.management import Auth0
 from auth0.v3.exceptions import Auth0Error
-import pprint
 from api.python_common.repeat_timer import RepeatTimer
+from urllib.request import urlopen
+from authlib.oauth2.rfc7523 import JWTBearerTokenValidator
+from authlib.jose.rfc7517.jwk import JsonWebKey
 
-
-pp = pprint.PrettyPrinter(indent=4)
-
+#validates auth0 JSON Webtokens (access_tokens) when accessing all endpoints
+class Auth0JWTBearerTokenValidator(JWTBearerTokenValidator):
+    def __init__(self, domain, audience):
+        issuer = f"https://{domain}/"
+        jsonurl = urlopen(f"{issuer}.well-known/jwks.json")
+        public_key = JsonWebKey.import_key_set(
+            json.loads(jsonurl.read())
+        )
+        super(Auth0JWTBearerTokenValidator, self).__init__(
+            public_key
+        )
+        self.claims_options = {
+            "exp": {"essential": True},
+            "aud": {"essential": True, "value": audience},
+            "iss": {"essential": True, "value": issuer},
+        }
 
 API_KEY_UPDATE_TIME = 79200 #22 hours
 
