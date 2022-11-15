@@ -1,5 +1,4 @@
 from django.shortcuts import render
-import os
 from rest_framework.exceptions import *
 from rest_framework import viewsets
 from rest_framework.decorators import action
@@ -7,7 +6,17 @@ from rest_access_policy import AccessViewSetMixin
 from api.permissions.roles import *
 from api import serializers
 from rest_framework.response import Response
+from authlib.integrations.django_oauth2 import ResourceProtector
+from django.http import JsonResponse
+import os
+import auth0
 
+require_auth = ResourceProtector()
+validator = auth0_validator.Auth0JWTBearerTokenValidator(
+    os.environ['AUTH0_DOMAIN'],
+    os.environ['AUTH0_IDENTIFIER']
+)
+require_auth.register_token_validator(validator)
 
 #overides model viewset to include getting scoped queryset and permissioned orgs 
 class ModelViewSet_(viewsets.ModelViewSet):
