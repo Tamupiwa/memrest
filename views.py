@@ -11,7 +11,7 @@ from django.http import JsonResponse
 import os
 import auth0
 
-require_auth = ResourceProtector()
+require_oauth = ResourceProtector()
 validator = auth0_validator.Auth0JWTBearerTokenValidator(
     os.environ['AUTH0_DOMAIN'],
     os.environ['AUTH0_IDENTIFIER']
@@ -42,7 +42,7 @@ class ModelViewSet_(viewsets.ModelViewSet):
     
     access_policy = UsersAccessPolicy
 
-    #lists all the streams of the users organization 
+    #lists all the streams of the users organization
     def list(self, request):
         serializer = serializers.GenericListSerializer(data=request.query_params)
         serializer.is_valid(raise_exception=True)
