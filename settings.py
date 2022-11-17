@@ -136,8 +136,7 @@ REST_FRAMEWORK = {
     # or allow read-only access for unauthenticated users.
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
-        #***'api.permissions.security.IPWhitelistPermission',
-        #***'api.permissions.security.StagingPermission'
+        'api.permissions.OAuth.OAuthPermission'
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
