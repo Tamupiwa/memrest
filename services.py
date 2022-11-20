@@ -28,7 +28,7 @@ Handles logic for the user endpoint
 class UserService(BaseService):
     def __init__(self, request=None, queryset=None, permissed_orgs=None):
         self.request = request
-        self.scoped_queryset = self.unarchived_queryset(queryset) if queryset else None
+        self.scoped_queryset = queryset
         self.permissed_orgs = permissed_orgs
 
     #returns all users of a users organization
@@ -89,11 +89,6 @@ class UserService(BaseService):
             ath = Auth0ManagmentAPI(client_id, client_secret)
             ath.delete_user(user.auth0_id)
             user.delete()
-    
-    #checks if user is within an organization that is archived
-    def unarchived_queryset(self, queryset):
-        archived_orgs_users = User.objects.filter(organizations__archived=True).values_list('id', flat=True)
-        return queryset.exclude(id__in=archived_orgs_users)
 
     #returns all organizations
     def all_organizations(self, user_id):
@@ -120,7 +115,7 @@ class UserService(BaseService):
 class OrganizationService(BaseService):
     def __init__(self, request=None, queryset=None, permissed_orgs=None):
         self.request = request
-        self.scoped_queryset = self.unarchived_queryset(queryset) if queryset else None
+        self.scoped_queryset = queryset
         self.permissed_orgs = permissed_orgs
 
     #returns all organizations user belong to
@@ -192,17 +187,12 @@ class OrganizationService(BaseService):
                 #requests.get("yourdomain.com/jobs/remove-users", timeout=0.0000000001)
             except requests.exceptions.ReadTimeout: 
                 pass
-
-
-    #returns unarchived organization(s) from scoped queryset
-    def unarchived_queryset(self, queryset):
-        return queryset.filter(archived=False)
     
 
 class OrganizationMembershipService(BaseService):
     def __init__(self, request=None, queryset=None, permissed_orgs=None):
         self.request = request
-        self.scoped_queryset = self.unarchived_queryset(queryset) if queryset else None
+        self.scoped_queryset = queryset
         self.permissed_orgs = permissed_orgs
 
     #returns all users of an organization
@@ -266,10 +256,6 @@ class OrganizationMembershipService(BaseService):
             client_secret = os.environ.get('auth0_client_secret')
             ath = Auth0ManagmentAPI(client_id, client_secret)
             User.objects.filter(id=organization_user['user__id']).delete()
-             
-    #filters scoped queryset for unarchived memberships only
-    def unarchived_queryset(self, queryset):
-        return queryset.objects.filter(organization__archived=False)
 
     #checks that permissions tags are valid
     def validate_permissions(self, permissions):
