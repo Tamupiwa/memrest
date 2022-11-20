@@ -70,7 +70,7 @@ class OrganizationsAccessPolicy(AccessPolicy, BaseAccessPolicy):
     statements = [
         {
             "action": ["*"],
-            "principal": ['group:Admin'],
+            "principal": ['group:Organization admin'],
             "effect": "allow"
         }
     ]
@@ -88,7 +88,7 @@ class UsersAccessPolicy(AccessPolicy, BaseAccessPolicy):
     statements = [
         {
             "action": ["*"],
-            "principal": ["group:System admin", "group:Support", "group:Facility manager",  "group:Organization admin"],
+            "principal": ["group:user", "group:admin"],
             "effect": "allow"
         },
 
