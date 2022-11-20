@@ -22,13 +22,22 @@ python3 manage.py runserver
 ```
 
 ## Adding new endpoints
-New Endpoints can easily be added by following the design conventions for the base template
+New Endpoints can easily be added by following the design conventions of the base template.
 
 1. Define an access policy for the Endpoint in policies.py for all membership roles 
 2. Define a viewset for the new resource 
-3. Define a service for the new resource
-4. Define a Model for the resource
-5. Add the viewset to the urls
+3. Define a serializer for the resource
+4. Define a service for the new resource
+5. Define a Model for the resource
+6. Add the viewset to the urls
+
+For example the Base Users endpoints in the base template containts the folowing
+1. Access policy -> UsersAccessPolicy
+2. Viewset -> UsersViewSet
+3. Serializer -> UsersSerializer
+4. Service -> UsersService
+5. Model -> UserModel
+
 
 ```
 class BooksAccessPolicy(AccessPolicy, BaseAccessPolicy):
