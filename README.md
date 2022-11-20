@@ -10,6 +10,21 @@ This design template allows anyone to build REST API's while maintaining a seper
 
 ## Usage
 
+```
+Define an access policy for the Viewset in policies.py for all membership roles 
+
+class UsersAccessPolicy(AccessPolicy, BaseAccessPolicy):
+    statements = [
+        {
+            "action": ["*"],
+            "principal": ["group:Organization admin"],
+            "effect": "allow"
+        },
+
+    ]
+  ... 
+```
+
 
 ## Dependencies
 - django
