@@ -21,6 +21,7 @@ user.groups.add(group)
 python3 manage.py runserver
 ```
 
+## Adding new endpoints
 New Endpoints can easily be added by following the design conventions for the base template
 
 1. Define an access policy for the Endpoint in policies.py for all membership roles 
