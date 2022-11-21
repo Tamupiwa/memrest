@@ -313,7 +313,7 @@ class OrganizationMembershipService(BaseService):
                 client_id = os.environ.get('AUTH_CLIENT_ID')
                 client_secret = os.environ.get('AUTH0_CLIENT_SECRET')
                 domain = os.environ.get('AUTH0_DOMAIN)
-                ath = services.auth0.Auth0ManagmentAPI(client_id, client_secret)
+                ath = services.auth0.Auth0ManagmentAPI(client_id, client_secret, domain)
                 resp = ath.get_user(token_plain['email'])
                 #check if user with matching email already exists
                 existing_user = resp[0]['user_id']
