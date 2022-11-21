@@ -310,8 +310,9 @@ class OrganizationMembershipService(BaseService):
                 token_plain = s.loads(token)
                 #if the user already has has an account dont create a new account 
                 #... linked them to the organization instead
-                client_id = os.environ.get('auth0_client_id')
-                client_secret = os.environ.get('auth0_client_secret')
+                client_id = os.environ.get('AUTH_CLIENT_ID')
+                client_secret = os.environ.get('AUTH0_CLIENT_SECRET')
+                domain = os.environ.get('AUTH0_DOMAIN)
                 ath = services.auth0.Auth0ManagmentAPI(client_id, client_secret)
                 resp = ath.get_user(token_plain['email'])
                 #check if user with matching email already exists
