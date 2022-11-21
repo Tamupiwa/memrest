@@ -29,7 +29,7 @@ API_KEY_UPDATE_TIME = 79200 #22 hours
 
 class Auth0ManagmentAPI:
 
-    def __init__(self, non_interactive_client_id, non_interactive_client_secret, domain="dev-xz-ifzda.au.auth0.com"):
+    def __init__(self, non_interactive_client_id, non_interactive_client_secret, domain):
         self.client_id = non_interactive_client_id
         self.client_secret = non_interactive_client_secret
         self.domain = domain
