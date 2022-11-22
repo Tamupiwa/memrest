@@ -5,6 +5,7 @@ from rest_framework.decorators import action
 from rest_access_policy import AccessViewSetMixin
 from api.permissions.roles import *
 from api import serializers
+from django.conf import settings
 from rest_framework.response import Response
 from authlib.integrations.django_oauth2 import ResourceProtector
 from django.http import JsonResponse
