@@ -82,8 +82,8 @@ so that Django knows which user to authenticate and pass to the request.user obj
 user_email: <users email>
 auth0_user_id: <users auth0-id>
 
-Naming convention for the application must be the organization_name (organization_id)
-e.g Microsoft Global (52de3b66-759f-4dd8-954b-d3970576b387)
+Naming convention for the application must be the user_email (user_id)
+e.g dummy@dummy.com (52de3b66-759f-4dd8-954b-d3970576b387)
 
 
 ## Dependencies
