@@ -2,7 +2,7 @@ from auth0.v3.authentication import GetToken
 from auth0.v3.management import Auth0
 from auth0.v3.exceptions import Auth0Error
 from api.python_common.repeat_timer import RepeatTimer
-from api_project import settings
+from django.conf import settings
 
 API_KEY_UPDATE_TIME = 79200 #22 hours
 
