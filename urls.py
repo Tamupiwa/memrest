@@ -11,7 +11,7 @@ admin.site.site_header = 'Memrest'
 admin.site.site_title = 'Memrest'
 
 router = routers.SimpleRouter(trailing_slash=False)
-
+router.register(r'/auth', views.AuthViewSet, basename='auth')
 router.register(r'/organizations', views.OrganizationsViewSet, basename='organizations')
 router.register(r'/organization-memberships', views.OrganizationMembershipViewSet, basename='organization-memberships')
 router.register(r'/users', views.UsersViewSet, basename='users')
