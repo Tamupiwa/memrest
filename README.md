@@ -9,17 +9,23 @@ Memrest uses a layered design so all permissioning, business logic, Models/Data 
 This design template allows anyone to build REST API's while maintaining a seperation of concerns for all layers of code.
 
 ## Usage
+1. run `python3 -m venv /path/to/your/envrionment` to create a virtual envrionment
+2. cd to the environment and run `source bin/activate` to activate the environment 
+3. run `pip3 install -r /path/to/your/requirements.txt` to install all the dependencies,
 
-To start using the base API, create a new django superuser, create an organization, create a organization membership to assign the user to the organization, add the user to the permission groups depending on the role selected when creating the users organization membership. 
-Create a virtual envrionment, install the requirements in the environment, create an Auth0 tenant and API by following the starting instructions in the quickstart integration guide https://www.agiliq.com/blog/2020/05/implementing-auth0-authentication-in-drf-apis/, Run the API using locally. 
+4. To quickly start using the base API, create a new django superuser, create the permission groups, add the superuser in the system admin permission group 
 ``` 
-from django.contrib.auth import Group
+from django.contrib.auth.models import Group
 from api.models import User
-group = Groups.objects.get(name='<ROLE_OF_CREATED_USERS_MEMBERSHIP>')
+for role in ['admin', 'user', 'system admin']:
+    Group.objects.create(name=role)
+    
+group = Groups.objects.get(name='system admin')
 user = User.objects.get(email='<YOUR_CREATED_USERS_EMAIL>')
 user.groups.add(group)
-python3 manage.py runserver
 ```
+5. Create an Auth0 user, application and API by following the starting instructions in the quickstart integration guide https://www.agiliq.com/blog/2020/05/implementing-auth0-authentication-in-drf-apis/, 
+6. run `python3 manage.py runserver` to run API locally on port 8000 at http://127.0.0.1:8000/.
 
 ## Adding new endpoints
 New Endpoints can easily be added by following the design conventions of the base template.
