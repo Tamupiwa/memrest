@@ -76,7 +76,7 @@ class StationsViewSet(AccessViewSetMixin, PermissionedModelViewSet):
 
 ## Auth0 Integration admin information
 Everytime a new user requests direct API access, a new m2m client application with client credential grant type enabled must be created in Auth0 either using the Auth0ManagementAPI or in the web dashboard.
-Furthermore since access tokens using client-credentials flow are not connected to the client app and do not have any direct link any auth0 user we must also supply the application metadata with the following keys
+Furthermore since access tokens using client-credentials flow are not connected to the client app and do not have any direct link any auth0 user we must also supply the new client application metadata with the following keys
 so that Django knows which user to authenticate and pass to the request.user object during authentication in the custom Auth0 authentication backend
 
 user_email: <users email>
