@@ -1,29 +1,8 @@
-import pprint
-import json
 from auth0.v3.authentication import GetToken
 from auth0.v3.management import Auth0
 from auth0.v3.exceptions import Auth0Error
 from api.python_common.repeat_timer import RepeatTimer
-from urllib.request import urlopen
-from authlib.oauth2.rfc7523 import JWTBearerTokenValidator
-from authlib.jose.rfc7517.jwk import JsonWebKey
-
-#validates auth0 JSON Webtokens (access_tokens) when accessing all endpoints
-class Auth0JWTBearerTokenValidator(JWTBearerTokenValidator):
-    def __init__(self, domain, audience):
-        issuer = f"https://{domain}/"
-        jsonurl = urlopen(f"{issuer}.well-known/jwks.json")
-        public_key = JsonWebKey.import_key_set(
-            json.loads(jsonurl.read())
-        )
-        super(Auth0JWTBearerTokenValidator, self).__init__(
-            public_key
-        )
-        self.claims_options = {
-            "exp": {"essential": True},
-            "aud": {"essential": True, "value": audience},
-            "iss": {"essential": True, "value": issuer},
-        }
+from api_project import settings
 
 API_KEY_UPDATE_TIME = 79200 #22 hours
 
@@ -135,7 +114,7 @@ class Auth0ManagmentAPI:
     def get_passsword_reset_url_by_id(self, user_id, invite_url=False):
         request_body = {
             'user_id' : user_id,
-            'result_url' : 'https://digital.methodrecycling.com/dashboard/'
+            'result_url' : settings.HOME_URL
         }
 
         resp = self.auth0.tickets.create_pswd_change(request_body,)
@@ -157,4 +136,7 @@ class Auth0ManagmentAPI:
         template = self.auth0.email_templates.get(template_name)
         return template.get('body') 
 
-        
+    #returns all clients/applications
+    def get_client_application(self, client_id):
+        client = self.auth0.clients.get(client_id)
+        return client
