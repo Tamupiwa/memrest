@@ -1,5 +1,5 @@
 # Memrest
-Memrest is a barebones Django REST API that allows you to quickly get a Django application up and runnning with Users, Organizations, Memberships,  automatic role scoped endpoint permissioning and resource partitioning and Oauth 2.0 integration using Auth0. 
+Memrest is a barebones Django REST API that allows you to quickly get a Django application up and runnning with Users, Organizations, Memberships,  automatic role scoped endpoint permissions and role scoped resource partitioning and Oauth 2.0 integration using Auth0. 
 
 ## Design Philosophy
 Memrest uses a layered design so all permissioning, business logic, Models/Data are seperated in different layers 
@@ -39,7 +39,12 @@ For example the Base Users endpoints in the base template containts the folowing
 5. Model -> UserModel
 
 
+##Creating an Access policy
+
+Access policies restrict users to ViewSets/endpoints based on their roles defined by thier organization memberships. Each endpoint is an allow only policy with deny by default. Each access policy must implement a scoped_queryset method which returns a queryset of all the resources a users is
+able to read and edit based on the permissed organizations (a list of organizations a user has membership for based on the access policy of the viewset they are trying to access. An access policy is then applied to a ViewSet as below. 
 ```
+
 class BooksAccessPolicy(AccessPolicy, BaseAccessPolicy):
     statements = [
         {
@@ -49,6 +54,17 @@ class BooksAccessPolicy(AccessPolicy, BaseAccessPolicy):
         },
 
     ]
+    
+    def scope_queryset(self, request, role_scoped, action=None, organization_id=None):
+        permissed_orgs = self.get_permissioned_organizations(request, role_scoped, action, organization_id)
+        organizations = Organization.objects.filter(id__in=permissed_orgs)
+        return organizations
+   
+   
+class StationsViewSet(AccessViewSetMixin, PermissionedModelViewSet):
+    access_policy = BooksAccessPolicy
+    
+    def list(self, request):
   ... 
   
 ```
