@@ -175,4 +175,35 @@ class OrganizationMembershipViewSet(AccessViewSetMixin, PermissionedModelViewSet
         service = services.organization_memberships.OrganizationMembershipService(self.request, self.queryset)
         service.delete(pk)
         return Response(status=204, content_type='application/json')
+   
+class AuthViewSet(AccessViewSetMixin, PermissionedModelViewSet):
+    access_policy = AuthAccessPolicy
+
+    def list(self, request):
+        return Response({'detail': 'List method unsuported'}, status=405, content_type='application/json')
+
+    #takes clients client_id, client_secret and returns an access token from auth0 for client credentials flow
+    def create(self, request):
+        serializer = serializers.AuthSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = {
+            'client_id': serializer.validated_data['client_id'],
+            'client_secret': serializer.validated_data['client_secret'],
+            'grant_type': 'client_credentials',
+            'audience': settings.AUTH0_AUDIENCE,
+        }
+        headers = { 'content-type': "application/x-www-form-urlencoded" }
+        resp = requests.post('https://auth.methodrecycling.com/oauth/token', data=data, headers=headers)
+        if resp.status_code == 200:
+            return Response(resp.json(), status=200, content_type='application/json')
+
+        return Response({'Detail': 'Invalid credentials'}, status=401, content_type='application/json')
+    
+    def retrieve(self, request, pk):
+        return Response({'detail': 'Retrieve method unsuported'}, status=405, content_type='application/json')
+    
+    def update(self, request, pk):
+        return Response({'detail': 'Update method unsuported'}, status=405, content_type='application/json')
+
+    def destroy(self, request, pk):
 
