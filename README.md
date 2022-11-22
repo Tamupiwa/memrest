@@ -11,7 +11,7 @@ This design template allows anyone to build REST API's while maintaining a seper
 ## Usage
 
 To start using the base API, create a new django superuser, create an organization, create a organization membership to assign the user to the organization, add the user to the permission groups depending on the role selected when creating the users organization membership. 
-Create a virtual envrionment, install the requirements in the environment, create an Auth0 tenant follow the quickstart integration guide https://www.agiliq.com/blog/2020/05/implementing-auth0-authentication-in-drf-apis/, Run the API using locally. 
+Create a virtual envrionment, install the requirements in the environment, create an Auth0 tenant and API by following the starting instructions in the quickstart integration guide https://www.agiliq.com/blog/2020/05/implementing-auth0-authentication-in-drf-apis/, Run the API using locally. 
 ``` 
 from django.contrib.auth import Group
 from api.models import User
@@ -61,5 +61,5 @@ class BooksAccessPolicy(AccessPolicy, BaseAccessPolicy):
 - pytest-django
 - auth0-python
 - drf-nested-routers
-- Authlib
+- python-jose
 
