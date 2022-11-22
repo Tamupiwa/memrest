@@ -139,8 +139,7 @@ REST_FRAMEWORK = {
         'api.permissions.OAuth.OAuthPermission'
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',
-        'rest_framework.authentication.SessionAuthentication'
+        'auth0_auth.Auth0TokenAuthentication',
     ],
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer'
@@ -158,6 +157,12 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 500
 }
 
+# auth0 settings
+AUTH0_DOMAIN = os.getenv('AUTH0_DOMAIN')
+AUTH0_ALGORITHMS = ['RS256']
+AUTH0_API_AUDIENCE = os.getenv('AUTH0_IDENTIFIER')
+
+HOME_URL = 'http://127.0.0.1:8000/' #change in production to your homepage url
 APPEND_SLASH = False
 ROOT_URLCONF = 'rehab.urls'
 
