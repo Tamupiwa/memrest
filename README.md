@@ -39,10 +39,10 @@ For example the Base Users endpoints in the base template containts the folowing
 5. Model -> UserModel
 
 
-##Creating an Access policy
+## Creating an Access policy
 
 Access policies restrict users to ViewSets/endpoints based on their roles defined by thier organization memberships. Each endpoint is an allow only policy with deny by default. Each access policy must implement a scoped_queryset method which returns a queryset of all the resources a users is
-able to read and edit based on the permissed organizations (a list of organizations a user has membership for based on the access policy of the viewset they are trying to access. An access policy is then applied to a ViewSet as below. 
+able to read and edit based on the permissed organizations (a list of organizations a user has membership for based on the access policy of the viewset they are trying to access. An access policy is then applied to a ViewSet as below. For more on access policies visit the official library source https://github.com/rsinger86/drf-access-policy 
 ```
 
 class BooksAccessPolicy(AccessPolicy, BaseAccessPolicy):
