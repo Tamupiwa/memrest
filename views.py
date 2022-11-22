@@ -190,7 +190,7 @@ class AuthViewSet(AccessViewSetMixin, PermissionedModelViewSet):
             'client_id': serializer.validated_data['client_id'],
             'client_secret': serializer.validated_data['client_secret'],
             'grant_type': 'client_credentials',
-            'audience': settings.AUTH0_AUDIENCE,
+            'audience': settings.AUTH0_API_AUDIENCE,
         }
         headers = { 'content-type': "application/x-www-form-urlencoded" }
         resp = requests.post('https://auth.methodrecycling.com/oauth/token', data=data, headers=headers)
