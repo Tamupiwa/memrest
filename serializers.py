@@ -49,7 +49,7 @@ class UserSerializer(serializers.ModelSerializer):
     def update(self, user_id, validated_data):
         service = self.context['service']
         instance = service.update(user_id, validated_data)
-        return 
+        return instance
  
 
 #---------------  OrganizationMember ------------ 
@@ -65,4 +65,10 @@ class OrganizationMembershipSerializer(serializers.ModelSerializer):
     def update(self, membership_id, validated_data):
         service = self.context['service']
         instance = service.update(membership_id, validated_data)
-        return 
+        return instance
+    
+  
+#--------------- AuthSerializer ----------------------
+class AuthSerializer(serializers.Serializer):
+    client_id = serializers.CharField()
+    client_secret = serializers.CharField()
