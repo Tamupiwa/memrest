@@ -83,7 +83,7 @@ so that Django knows which user to authenticate and pass to the request.user obj
 **auth0_user_id**: 'auth0|abcd123'
 
     
-Naming convention for the application must be the user_email (user_id)
+Naming convention for the application must be the user_email (user_id) <br />
 e.g dummy@dummy.com (52de3b66-759f-4dd8-954b-d3970576b387)
 
 
