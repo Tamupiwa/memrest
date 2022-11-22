@@ -78,7 +78,6 @@ class Auth0TokenAuthentication(BaseAuthentication):
 
     def authenticate(self, request):
         auth = get_authorization_header(request).split()
-
         if not auth or auth[0].lower() != self.keyword.lower().encode():
             return None
 
@@ -87,6 +86,7 @@ class Auth0TokenAuthentication(BaseAuthentication):
 
         if len(auth) > 2:
             raise exceptions.AuthenticationFailed(self.err_msg)
+
         token = auth[1]
         return self.authenticate_credentials(token)
 
@@ -95,21 +95,22 @@ class Auth0TokenAuthentication(BaseAuthentication):
         if not is_valid:
             raise exceptions.AuthenticationFailed(self.err_msg)
 
+
         grant_type = payload['gty']
         #if this is for a client credentials flow it will not have a user so we get the admin user the client application is assigned to
         if grant_type == 'client-credentials':
             client_id = payload['azp']
             client_meta_data = get_auth0_client_application_meta_data(client_id)
-            auth0_email = client_meta_data['admin_user_email']
-            auth0_user_id = client_meta_data['admin_auth0_id']
+            auth0_email = client_meta_data['user_email']
+            auth0_user_id = client_meta_data['auth0_user_id']
             user = User.objects.filter(email=auth0_email, auth0_id=auth0_user_id).last()
         else:
             user_data = get_auth0_user_data(token)
             auth0_email = user_data.get('email')
-            auth0_user_id = user_data.get('user_id')
-            user = User.objects.filter(email=auth0_email, id=auth0_user_id).last()
+            auth0_user_id = user_data.get('sub')
+            user = User.objects.filter(email=auth0_email, auth0_id=auth0_user_id).last()
 
         if not user:
-            raise exceptions.AuthenticationFailed(self.err_msg)
+            raise exceptions.AuthenticationFailed('Matching user not found for Identity Server user')
 
         return user, token
