@@ -1,3 +1,6 @@
+import requests 
+import http.client
+import json
 from django.shortcuts import render
 from rest_framework.exceptions import *
 from rest_framework import viewsets
@@ -179,6 +182,8 @@ class OrganizationMembershipViewSet(AccessViewSetMixin, PermissionedModelViewSet
    
 class AuthViewSet(AccessViewSetMixin, PermissionedModelViewSet):
     access_policy = AuthAccessPolicy
+    authentication_classes = []
+    permission_classes = []
 
     def list(self, request):
         return Response({'detail': 'List method unsuported'}, status=405, content_type='application/json')
@@ -187,16 +192,19 @@ class AuthViewSet(AccessViewSetMixin, PermissionedModelViewSet):
     def create(self, request):
         serializer = serializers.AuthSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        data = {
-            'client_id': serializer.validated_data['client_id'],
-            'client_secret': serializer.validated_data['client_secret'],
-            'grant_type': 'client_credentials',
-            'audience': settings.AUTH0_API_AUDIENCE,
-        }
-        headers = { 'content-type': "application/x-www-form-urlencoded" }
-        resp = requests.post('https://auth.methodrecycling.com/oauth/token', data=data, headers=headers)
-        if resp.status_code == 200:
-            return Response(resp.json(), status=200, content_type='application/json')
+        client_id = serializer.validated_data['client_id']
+        client_secret = serializer.validated_data['client_secret']
+        conn = http.client.HTTPSConnection("dev-xz-ifzda.au.auth0.com")
+        payload = {"client_id": client_id, "client_secret": client_secret, "audience": "https://api.methodrecycling.com/v2", "grant_type": "client_credentials"}
+        payload = json.dumps(payload)
+        headers = { 'content-type': "application/json" }
+        conn.request("POST", "/oauth/token", payload, headers)
+        res = conn.getresponse()
+        if res.status == 200:
+            data = res.read()
+            data = data.decode("utf-8")
+            data = json.loads(data)
+            return Response(data, status=200, content_type='application/json')
 
         return Response({'Detail': 'Invalid credentials'}, status=401, content_type='application/json')
     
@@ -207,4 +215,5 @@ class AuthViewSet(AccessViewSetMixin, PermissionedModelViewSet):
         return Response({'detail': 'Update method unsuported'}, status=405, content_type='application/json')
 
     def destroy(self, request, pk):
+        return Response({'detail': 'Delete method unsuported'}, status=405, content_type='application/json')
 
