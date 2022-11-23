@@ -84,6 +84,9 @@ class StationsViewSet(AccessViewSetMixin, PermissionedModelViewSet):
 ```
 
 ## Auth0 Integration admin information
+
+**Authentication via server (client-credentials flow)**
+
 Everytime a new user requests direct API access, a new m2m client application with client credential grant type enabled must be created in Auth0 either using the Auth0ManagementAPI or in the web dashboard.
 Furthermore since access tokens using client-credentials flow are not connected to the client app and do not have any direct link to any auth0 user we must also supply the new client application metadata with the following keys
 so that Django knows which user to authenticate and pass to the request.user object during authentication in the custom Auth0 authentication backend. A new Client m2m app is not required for new users authenticating to the API via a SPA (vue.js/react.js) since the Authorization flow is used and the user information is passed during the flow.
@@ -91,9 +94,13 @@ so that Django knows which user to authenticate and pass to the request.user obj
 **user_email**: 'dummy@dummy.com' <br />
 **auth0_user_id**: 'auth0|abcd123'
 
-    
-Naming convention for the application must be the user_email (user_id) <br />
+It is recommended to abide by the followning naming convention for the application name *user_email (user_id)* <br />
+So you can easily sort each client to a user as the number of users requiring direct API integration grows
 e.g dummy@dummy.com (52de3b66-759f-4dd8-954b-d3970576b387)
+
+**Authentication via Single Page app (Vue.js/react.js)**
+
+Secure authentication via client side application using Authorization flow with PCKE to avoid exposing the client secret can be easily done using the Auth0 SPA SDK (https://auth0.com/docs/libraries/auth0-single-page-app-sdk)
 
 
 ## Dependencies
