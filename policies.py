@@ -120,3 +120,16 @@ class OrganizationMembershipsAccessPolicy(AccessPolicy, BaseAccessPolicy):
         permissed_orgs = self.get_permissioned_organizations(request, role_scoped, action, organization_id)    
         organization_members = OrganizationMembership.filter(organization__id=permissed_orgs)
         return organization_members
+
+ #all authentication endpoint access 
+class AuthAccessPolicy(AccessPolicy, BaseAccessPolicy):
+    statements = [
+        {
+            "action": ["create"],
+            "principal": ["*"],
+            "effect": "allow"
+        },
+
+    ]
+    def scope_queryset(self, request, role_scoped, action=None, organization_id=None):
+        pass
