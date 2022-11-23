@@ -1,168 +1,17 @@
-from api.models import OrganizationMembership, User, Organization
-from api.services.auth0 import Auth0ManagmentAPI
+from django.db.models import Q
 from rest_framework.exceptions import *
-from django.db import transaction
-from django.db.models import Q
-from django.db import transaction
-from django.db.models import Q
-from itsdangerous import Serializer
 from django.template.loader import render_to_string
 from django.template.loader import render_to_string
-from django.contrib.auth.models import User, Group
-import requests
+from api.models import Organization, User, OrganizationMembership
+from django.contrib.auth.models import Group
+from api.services.base_service import BaseService
+from api.utilities.auth0 import Auth0ManagmentAPI
+from django.db import transaction
+from django.core.mail import EmailMessage
+from api import services
 import os
-
-#Contains all base  for all model services
-class BaseService:
-    
-    #validates user can create resource for organization passed in request body
-    #since this action permission cannot be provisioned using the scoped queryset since the resource doesnt exist yet
-    def validate_create_permission(self, organization_id):
-        if organization_id not in self.permissed_orgs:
-            raise NotFound('Organization not found')
-            
-'''
-Handles logic for the user endpoint
-
-'''
-class UserService(BaseService):
-    def __init__(self, request=None, queryset=None, permissed_orgs=None):
-        self.request = request
-        self.scoped_queryset = queryset
-        self.permissed_orgs = permissed_orgs
-
-    #returns all users of a users organization
-    def all(self):
-        return self.scoped_queryset
-
-    #creates a new user in db and in auth0
-    def create(self, email, password, first_name, last_name, organization_id, role, is_key_contact):
-        client_id = os.environ.get('auth0_client_id')
-        client_secret = os.environ.get('auth0_client_secret')
-        ath = Auth0ManagmentAPI(client_id, client_secret)
-        auth0_user_id = (ath.create_user(email=email, password=password,
-                                        validate_email=True))
-        user = (User.objects.create_user(first_name=first_name, last_name=last_name, role=role,
-                                        is_key_contact=is_key_contact, auth0_id=auth0_user_id))
-        organization = organization.objects.get(id=organization_id)
-        user.organization.add(role=role, is_key_contact=is_key_contact)
-        return user
-
-    #return a specific user if their within their organization
-    def get(self, user_id):
-        if not self.scoped_queryset:
-            return False
-            
-        user = self.scoped_queryset.filter(id=user_id)
-        if user.exists():
-            return user[0]
-        else:
-            return False
-    
-    #returns a user if it belongs to a users organizations otherwise raises an error 
-    def get_or_raise(self, user_id):
-        user = self.get(user_id)
-        if not user:
-            raise NotFound('User not found.')
-        
-        return user
-
-    def update(self, user_id, validated_data):
-        instance = self.get_or_raise(user_id)
-        for key, value in validated_data.items():
-            setattr(instance, key, value)
-
-        instance.save()
-        return instance
-
-    #deletes a user 
-    def delete(self, user_id):
-        with transaction.atomic():
-            #validate user exists
-            user = self.get_or_raise(user_id)
-            #validates user isnt the sole admin in any of their organizations, 
-            # if they are do not allow user to be deleted until they asign admin to someone else or if 
-            # the entire organization is being deleted (archived)
-            self.validate_not_sole_admin(user_id)
-            client_id = os.environ.get('auth0_client_id')
-            client_secret = os.environ.get('auth0_client_secret')
-            ath = Auth0ManagmentAPI(client_id, client_secret)
-            ath.delete_user(user.auth0_id)
-            user.delete()
-
-    #returns all organizations
-    def all_organizations(self, user_id):
-        organization_ids = OrganizationMembership.objects.filter(user__id=user_id).values_list(organization__id, flat=True)
-        return Organization.objects.filter(id__in=organization_ids)
-
-    #checks if user is the sole admin in any of their organizations 
-    def validate_not_sole_admin(self, user_id):
-        #users organizations in which they are an admin
-        users_orgs = OrganizationMembership.objects.filter(user=user_id, role="Organization admin").values_list('organization__id', flat=True)
-        #get other users in users organizations
-        users_orgs_all_users = OrganizationMembership.objects.filter(organization__id=users_orgs)
-        #do not delete if user belongs to an organization where they are the sole admins
-        #for each organization a user belongs to check if they are the sole admins
-        for org_id in users_orgs:
-            total_org_admins = len(users_orgs_all_users.filter(id=org_id, role="Organization admin") )
-            admin_membership = users_orgs_all_users.filter(id=org_id, user__id=user_id, role= "Organization admin")
-            #if user is an admin for the org check if user is the sole admin 
-            if admin_membership.exists():
-                if admin_membership.filter(organization__archived__is_null=True) and total_org_admins == 1:
-                    raise PermissionDenied()
-
-
-class OrganizationService(BaseService):
-    def __init__(self, request=None, queryset=None, permissed_orgs=None):
-        self.request = request
-        self.scoped_queryset = queryset
-        self.permissed_orgs = permissed_orgs
-
-    #returns all organizations user belong to
-    def all(self):
-        return self.scoped_queryset
-
-    def create(self, validated_data):
-        org = Organization.objects.create(**validated_data)
-        return org
-
-    #returns an organization if the user belongs to the organization
-    def get(self, organization_id):
-        if not self.scoped_queryset:
-            return False
-            
-        if not self.scoped_queryset:
-            return False
-
-        org = self.scoped_queryset.filter(id=organization_id)
-        if org.exists():
-            return org[0]
-        else:
-            return False
-
-    #eturns an organization if it belongs to a users organizations otherwise raises an error 
-    def get_or_raise(self, organization_id ):
-        org = self.get(organization_id)
-        if not org:
-            raise NotFound()
-        
-        return org
-
-    def update(self, organization_id, validated_data):
-        organization = self.get_or_raise(organization_id)
-        for key, value in validated_data.items():
-            setattr(organization, key, value)
-            organization.save()
-
-        return organization
-
-    #archives an organization and removes identifiable information 
-    #.. Note: users and their auth0 accounts belonging to an organization are removed periodically using a task scheduler as it may take a long time.
-    #.. auth0 account is only deleted if user only belongs to that organization and no others)
-    def delete(self, organization_id):
-        organization = self.get_or_raise(organization_id)
-        organization.delete()
-    
+import string
+import random
 
 class OrganizationMembershipService(BaseService):
     def __init__(self, request=None, queryset=None, permissed_orgs=None):
@@ -171,8 +20,13 @@ class OrganizationMembershipService(BaseService):
         self.permissed_orgs = permissed_orgs
 
     #returns all users of an organization
-    def all(self):        
-        return self.scoped_queryset
+    def all(self, validated_data):     
+        user_id = validated_data.get('user_id')
+        all_memberships = self.scoped_queryset
+        if user_id:
+            all_memberships = self.scoped_queryset.filter(user__id=user_id)  
+
+        return all_memberships
 
     #returns an organization if it belongs to a users organizations
     def get(self, membership_id):
@@ -208,115 +62,117 @@ class OrganizationMembershipService(BaseService):
             user.groups.filter(name=role).delete()
 
     #adds a user to role permission group in djangos built-in permission
-    def add_user_to_role_permission_group(user, role):
-        user_group = user.groups.filter(role=role)
-        #if user isnt already in the 
-        if not user_group.exists():
-            user.group.add(role=rolel)
+    def add_user_to_role_permission_group(self, user, role):
+        role_permission = user.groups.filter(name=role)
+        #if user isnt already in the permission group for the role
+        if not role_permission.exists():
+            role_group = Group.objects.get(name=role)
+            user.groups.add(role_group)
 
     #remove a user from an organization
     def delete(self, membership_id):
         with transaction.atomic():
             #check organization exists and belongs to users organizations
-            organization_user = self.get_or_raise(membership_id)
-            user_id = organization_user.id
-            user_role = organization_user.role
+            membership = self.get_or_raise(membership_id)
+            role = membership.role
+            user_id = membership.user_id
+            membership_id = membership.id
+            #users total memberships
+            total_memberships = len(OrganizationMembership.objects.filter(user_id=user_id))
+
             #do not delete user if there is no other admin in the organization
-            if organization_user.role == 'Organization Admin':
+            if membership.role == 'admin' and len(OrganizationMembership.objects.filter(organization_id=membership.organization_id, role='admin') == 1):
                 raise ParseError('Another admin must be assigned before user can be removed from organization')
 
-            #remove userorganization record
-            organization_user.delete()
-            user = User.objects.filter(id=user_id)
+            #remove membership
+            membership.delete()
             #remove user from role permission group
-            self.remove_user_to_role_permission_group(user, user_role)
-            #if user has no other memberships delete them 
-            if not OrganizationMembership.objects.filter(user_id=user_id).exists():
-                client_id = os.environ.get('auth0_client_id')
-                client_secret = os.environ.get('auth0_client_secret')
-                ath = Auth0ManagmentAPI(client_id, client_secret)
-                result = ath.delete_user(user.auth0_id)
-                if result:
-                    user.delete()
+            user = User.objects.get(id=user_id)
+            self.remove_user_from_role_permission_group(user, role)
 
-    #checks that permissions tags are valid
-    def validate_permissions(self, permissions):
-        for perm in permissions:
-            try:
-                Tag.objects.get(perm['tag_id'])
-            except:
-                raise NotFound('Tag for permission not found.')
-
-     #creates a user invite link that expires after 7 days
-    def create_invite_token(self, organization_id, first_name, last_name, email, expires, is_external, permissions):
-        secret = os.environ.get('django_secret_key')
-        s = Serializer(secret, 60*60*24*7)
-        token = s.dumps(
-                {
-                    'first_name': first_name,
-                    'last_name': last_name,
-                    'email': email,
-                    'organization_id': organization_id,
-                    'expires': expires,
-                    'is_external': is_external,
-                    'permissions': permissions
-                }).decode('utf-8')
-        return token
-
-    #send invite link to invitees email
-    def send_invite(self, organization_id, user_id, sender_email, sender_name, to_email, expires, is_external, permissions):
-        #check if organization exits for the sending user
-        if not OrganizationMembership.objects.filter(user__id=user_id, organization__id=organization_id).exists():
-            raise PermissionDenied('Inviter organization not found.')
-
-        #check if tags ids of permissions exists
-        self.validated_permissions(permissions)
-        token = self.create_invite_token(organization_id, user_id, first_name, last_name, email, expires, is_external, permissions)
-        message = render_to_string('invite_email.html', {
-            'sender_name': sender_name, 
-            'sender_email': sender_email, 
-            'domain': 'yourdomain.com',
-            'token': token
-        })
-        email = EmailMessage(subject='Your App Invite', body=message, to=[to_email],from_email='"Your App" <no-reply@yourdomain.com>')
-        email.content_subtype = "html"
-        email.send(fail_silently=False)
-
-        #creates a django/auth0 user when a user click the inbox invite link 
-    def activate_invitation(self, request, token):
-        try:
-            with transaction.atomic():
-                secret = os.environ.get('django_secret_key')
-                s = Serializer(secret, 60*60*24*14)
-                #user id of admin 
-                token_plain = s.loads(token)
-                #if the user already has has an account dont create a new account 
-                #... linked them to the organization instead
-                client_id = os.environ.get('AUTH_CLIENT_ID')
+            #if user only has one membership also delete the user
+            if total_memberships == 1:
+                client_id = os.environ.get('AUTH0_CLIENT_ID')
                 client_secret = os.environ.get('AUTH0_CLIENT_SECRET')
-                domain = os.environ.get('AUTH0_DOMAIN)
-                ath = services.auth0.Auth0ManagmentAPI(client_id, client_secret, domain)
-                resp = ath.get_user(token_plain['email'])
-                #check if user with matching email already exists
-                existing_user = resp[0]['user_id']
-                if existing_user:
-                    user = User.objects.get(auth0_id=existing_user)
-                else:
-                    user = (User.objects.create( 
-                            first_name=token_plain['first_name'], last_name=token_plain['last_name'],
-                            timezone=token_plain['timezone']))
+                ath = Auth0ManagmentAPI(client_id, client_secret)
+                ath.delete_user(user.auth0_id)
+                user.delete()
+    
+    def send_invite(self, validated_data):
+        with transaction.atomic():
+            #membership within organization invite is coming from e.g microsoft admin inviting a employee
+            # #.. the sending_member_id ther microsoft admin membership
+            sending_member_id = validated_data['sending_member_id']
+            first_name = validated_data['first_name'].title()
+            last_name = validated_data['last_name'].title()
+            email = validated_data['to_email']
+            role = validated_data['role']
+            expires = validated_data['expires']
+            is_external = validated_data['is_external']
+            is_key_contact = validated_data['is_key_contact']
 
-                organization = Organization.objects.get(id=token_plain['organization_id'])
-                membership = OrganizationMembership.create(
-                    user=user, organization=organization, is_key_contact=token_plain['is_key_contact'],
-                    role=token_plain['role'])
+            #validate role is in the list of  available roles (this is validated by the serializer but 
+            # is CRITICAL so we validate it here too since assigning a user as support or system admin would be disasterious)
+            if role not in ['admin', 'user']:
+                raise ValidationError({"role": ["Invalid role type selected"]})
 
-                #add user to role permission group
-                self.add_user_to_role_permission_group(user, membership.role)
-                #create User in db and auth0
+            #gets/validates sending member
+            sending_member = OrganizationMembership.objects.get(id=sending_member_id, user_id=self.request.user.id)
+            sending_member_org_id = OrganizationMembership.objects.get(id=sending_member_id).organization_id
+            sending_member_orgs_facility_manager = sending_member.organization.facility_manager
+
+            #only create new user/auth0 account if they dont exists
+            user = User.objects.filter(email=email)
+            client_id = os.environ.get('AUTH0_CLIENT_ID')
+            client_secret = os.environ.get('AUTH0_CLIENT_SECRET')
+            domain = os.environ.get('AUTH0_DOMAIN')
+            ath = Auth0ManagmentAPI(client_id, client_secret, domain)
+
+            if not user.exists():
+                new_user = True
+                full_name = '{} {}'.format(first_name, last_name)
                 password = ''.join(random.choices(string.ascii_letters + string.digits + string.punctuation, k=9))
-                user = ath.create(**token_plain, timezone=organization.timezone, validate_email=True, password=password)
+                auth0_id = ath.create_user(email, full_name, password)
+                user = (User.objects.create_user( 
+                    email=email, password=password, is_active=True,
+                    auth0_id=auth0_id, first_name=first_name, last_name=last_name,
+                    timezone=self.request.user.timezone))
 
-                return user,
-        except itsdangerous.exc.SignatureExpired:
-            raise NotFound()
+            else:
+                new_user = False
+                user = user.first()
+                auth0_id = user.auth0_id
+                self.validate_existing_membership(sending_member_org_id, user.id, role)
+
+            organization = Organization.objects.get(id=sending_member_org_id)
+            OrganizationMembership.objects.create(
+                role=role, expires=expires, is_external=is_external, is_key_contact=is_key_contact,
+                user=user, organization=organization)
+
+
+            #add user to role permission group
+            self.add_user_to_role_permission_group(user, role)
+
+            #if this is a newly created user create auth0 password reset link otherwise, just make redirect link to the login page
+            if new_user:
+                redirect_url = ath.get_passsword_reset_url_by_id(auth0_id, invite_url=True)
+            else: 
+                redirect_url = settings.HOME_URL
+
+            message = render_to_string('invite_email.html', {
+                'sender_name': '{} {}'.format(self.request.user.first_name, self.request.user.last_name), 
+                'sender_email': self.request.user.email, 
+                'domain': settings.DOMAIN,
+                'redirect_url': redirect_url
+            })
+            email = EmailMessage(subject='Method InSight Invite', body=message, to=[email],from_email='<no-reply@' + settings.DOMAIN)
+            email.content_subtype = "html"
+            email.send(fail_silently=False)
+    
+    #validates user doesnt have an existing membership for the same role
+    def validate_existing_membership(self, organization_id, user_id, role):
+        if OrganizationMembership.objects.filter(
+            user=user_id, role=role,
+            organization_id=organization_id).exists():
+
+            raise Exception('User has an existing account with this role already.')
