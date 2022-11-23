@@ -13,6 +13,61 @@ import os
 import string
 import random
 
+class OrganizationService(BaseService):
+    def __init__(self, request=None, queryset=None, permissed_orgs=None):
+        self.request = request
+        self.scoped_queryset = queryset
+        self.permissed_orgs = permissed_orgs
+
+    #returns all organizations user belong to
+    def all(self):
+        return self.scoped_queryset
+
+    #creates organization and assigns it a facility manager
+    def create(self, validated_data):
+        with transaction.atomic():
+            organization = Organization.objects.create(**validated_data)
+                
+        return organization
+
+    #returns an organization if the user belongs to the organization
+    def get(self, organization_id):
+        if not self.scoped_queryset:
+            return False
+            
+        if not self.scoped_queryset:
+            return False
+
+        org = self.scoped_queryset.filter(id=organization_id)
+        if org.exists():
+            return org[0]
+        else:
+            return False
+
+    #eturns an organization if it belongs to a users organizations otherwise raises an error 
+    def get_or_raise(self, organization_id ):
+        org = self.get(organization_id)
+        if not org:
+            raise NotFound()
+        
+        return org
+
+    def update(self, organization_id, validated_data):
+        organization = self.get_or_raise(organization_id)
+        for key, value in validated_data.items():
+            setattr(organization, key, value)
+
+        organization.save()
+        return organization
+
+    #archives an organization and removes identifiable information 
+    #.. Note: users and their auth0 accounts belonging to an organization are removed periodically using a task scheduler as it may take a long time.
+    #.. auth0 account is only deleted if user only belongs to that organization and no others)
+    def delete(self, organization_id):
+        organization = self.get_or_raise(organization_id)
+        organization.delete()
+            
+            
 class OrganizationMembershipService(BaseService):
     def __init__(self, request=None, queryset=None, permissed_orgs=None):
         self.request = request
