@@ -161,32 +161,7 @@ class OrganizationService(BaseService):
     #.. auth0 account is only deleted if user only belongs to that organization and no others)
     def delete(self, organization_id):
         organization = self.get_or_raise(organization_id)
-        with transaction.atomic():
-            #remove all identifiable information from organization and mark their account as archived
-            organization.name='archived'
-            organization.archived=True
-            #if any of organization users don't belong to any other organization mark their account as inactive
-            organization_users = OrganizationMembership.objects.filter(organization_id=organization_id).values_list('user_id', flat=True)
-            for user_id in organization_users:
-                memberships = (OrganizationMembership.objects
-                        .filter(user__id=user_id))
-                
-                total_memberships = len(memberships)
-                if total_memberships == 1:
-                    User.objects.filter(id=user_id).update(is_active=False)
-
-            #delete all goals and milestones (milestones are auto deleted using cascade)
-            goals = Goal.objects.filter(organization_id=organization_id)
-            goals.delete()
-            organization.save()
-            #trigger task runner job to delete user/auth0 accounts without waiting for response to prevent hanging the api 
-            #... note: job is run periodically anyway so reliability is not a concern for this hacky solution 
-            try:
-                pass
-                #*** get correct the url
-                #requests.get("yourdomain.com/jobs/remove-users", timeout=0.0000000001)
-            except requests.exceptions.ReadTimeout: 
-                pass
+        organization.delete()
     
 
 class OrganizationMembershipService(BaseService):
@@ -244,18 +219,25 @@ class OrganizationMembershipService(BaseService):
         with transaction.atomic():
             #check organization exists and belongs to users organizations
             organization_user = self.get_or_raise(membership_id)
+            user_id = organization_user.id
+            user_role = organization_user.role
             #do not delete user if there is no other admin in the organization
             if organization_user.role == 'Organization Admin':
                 raise ParseError('Another admin must be assigned before user can be removed from organization')
 
             #remove userorganization record
             organization_user.delete()
+            user = User.objects.filter(id=user_id)
             #remove user from role permission group
-            self.remove_user_to_role_permission_group(user, organization_user['role'])
-            client_id = os.environ.get('auth0_client_id')
-            client_secret = os.environ.get('auth0_client_secret')
-            ath = Auth0ManagmentAPI(client_id, client_secret)
-            User.objects.filter(id=organization_user['user__id']).delete()
+            self.remove_user_to_role_permission_group(user, user_role)
+            #if user has no other memberships delete them 
+            if not OrganizationMembership.objects.filter(user_id=user_id).exists():
+                client_id = os.environ.get('auth0_client_id')
+                client_secret = os.environ.get('auth0_client_secret')
+                ath = Auth0ManagmentAPI(client_id, client_secret)
+                result = ath.delete_user(user.auth0_id)
+                if result:
+                    user.delete()
 
     #checks that permissions tags are valid
     def validate_permissions(self, permissions):
