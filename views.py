@@ -195,7 +195,7 @@ class AuthViewSet(AccessViewSetMixin, PermissionedModelViewSet):
         client_id = serializer.validated_data['client_id']
         client_secret = serializer.validated_data['client_secret']
         conn = http.client.HTTPSConnection(settings.AUTH0_DOMAIN)
-        payload = {"client_id": client_id, "client_secret": client_secret, "audience": settings.API_AUDIENCE, "grant_type": "client_credentials"}
+        payload = {"client_id": client_id, "client_secret": client_secret, "audience": settings.AUTH0_API_AUDIENCE, "grant_type": "client_credentials"}
         payload = json.dumps(payload)
         headers = { 'content-type': "application/json" }
         conn.request("POST", "/oauth/token", payload, headers)
