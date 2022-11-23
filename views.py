@@ -194,8 +194,8 @@ class AuthViewSet(AccessViewSetMixin, PermissionedModelViewSet):
         serializer.is_valid(raise_exception=True)
         client_id = serializer.validated_data['client_id']
         client_secret = serializer.validated_data['client_secret']
-        conn = http.client.HTTPSConnection("dev-xz-ifzda.au.auth0.com")
-        payload = {"client_id": client_id, "client_secret": client_secret, "audience": "https://api.methodrecycling.com/v2", "grant_type": "client_credentials"}
+        conn = http.client.HTTPSConnection(settings.AUTH0_DOMAIN)
+        payload = {"client_id": client_id, "client_secret": client_secret, "audience": settings.API_AUDIENCE, "grant_type": "client_credentials"}
         payload = json.dumps(payload)
         headers = { 'content-type': "application/json" }
         conn.request("POST", "/oauth/token", payload, headers)
