@@ -12,8 +12,9 @@ This design template allows anyone to build REST API's while maintaining a seper
 1. run `python3 -m venv /path/to/your/envrionment` to create a virtual envrionment
 2. cd to the environment and run `source bin/activate` to activate the environment 
 3. run `pip3 install -r /path/to/your/requirements.txt` to install all the dependencies,
-
-4. To quickly start using the base API, create a new django superuser, create the permission groups, add the superuser in the system admin permission group 
+4. Create an auth0 user in your Auth0 tenant dashboard
+5. run `python3 manage.py createsuperuser` to create a django super user using the same email as the auth0 user
+6. To create the permission groups, add the superuser in the system admin permission group and add the auth0 user id to the django user.
 ``` 
 from django.contrib.auth.models import Group
 from api.models import User
@@ -23,9 +24,11 @@ for role in ['admin', 'user', 'system admin']:
 group = Groups.objects.get(name='system admin')
 user = User.objects.get(email='<YOUR_CREATED_USERS_EMAIL>')
 user.groups.add(group)
+user.auth0_user_id = <Auth0|user_id>
+user.save()
 ```
-5. Create an Auth0 user, application and API by following the starting instructions in the quickstart integration guide https://www.agiliq.com/blog/2020/05/implementing-auth0-authentication-in-drf-apis/, 
-6. run `python3 manage.py runserver` to run API locally on port 8000 at http://127.0.0.1:8000/.
+6. Create an API in auth0 and create a client application (with auth0 database connection and enabled access to the API in the apps settings).
+8. run `python3 manage.py runserver` to run API locally on port 8000 at http://127.0.0.1:8000/.
 
 ## Adding new endpoints
 New Endpoints can easily be added by following the design conventions of the base template.
@@ -81,7 +84,7 @@ class StationsViewSet(AccessViewSetMixin, PermissionedModelViewSet):
 ```
 
 ## Auth0 Integration admin information
-Everytime a new user requests direct API access, a new m2m client application with client credential grant type enabled must be created in Auth0 either using the Auth0ManagementAPI or in the web dashboard.
+Everytime a new user requests direct API access, a new m2m client application with client credential grant type must enabled must be created in Auth0 either using the Auth0ManagementAPI or in the web dashboard.
 Furthermore since access tokens using client-credentials flow are not connected to the client app and do not have any direct link any auth0 user we must also supply the new client application metadata with the following keys
 so that Django knows which user to authenticate and pass to the request.user object during authentication in the custom Auth0 authentication backend. A new Client m2m app is not required for new users authenticating to the API via a SPA (vue.js/react.js) since the Authorization flow is used and the user information is passed during the flow.
 
