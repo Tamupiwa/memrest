@@ -91,11 +91,11 @@ Everytime a new user requests direct API access, a new m2m client application wi
 Furthermore since access tokens using client-credentials flow are not connected to the client app and do not have any direct link to any auth0 user we must also supply the new client application metadata with the following keys
 so that Django knows which user to authenticate and pass to the request.user object during authentication in the custom Auth0 authentication backend. A new Client m2m app is not required for new users authenticating to the API via a SPA (vue.js/react.js) since the Authorization flow is used and the user information is passed during the flow.
 
-**user_email**: 'dummy@dummy.com' <br />
-**auth0_user_id**: 'auth0|abcd123'
+>**user_email**: 'dummy@dummy.com' <br />
+>**auth0_user_id**: 'auth0|abcd123'
 
 It is recommended to abide by the followning naming convention for the application name *user_email (user_id)* <br />
-So you can easily sort each client to a user as the number of users requiring direct API integration grows
+So you can easily sort each client to a user as the number of users requiring direct API integration grows <br />
 e.g dummy@dummy.com (52de3b66-759f-4dd8-954b-d3970576b387)
 
 **Authentication via Single Page app (Vue.js/react.js)**
