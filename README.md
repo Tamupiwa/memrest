@@ -83,7 +83,7 @@ class BooksViewSet(AccessViewSetMixin, PermissionedModelViewSet):
   
 ```
 
-## Auth0 Authentication Admin Information
+## Auth0 Authentication 
 
 ***Authentication via server (client-credentials flow)***
 
