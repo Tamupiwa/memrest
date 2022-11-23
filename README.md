@@ -21,9 +21,9 @@ from api.models import User
 for role in ['admin', 'user', 'system admin']:
     Group.objects.create(name=role)
     
-group = Groups.objects.get(name='system admin')
+perm_group = Groups.objects.get(name='system admin')
 user = User.objects.get(email='<YOUR_CREATED_USERS_EMAIL>')
-user.groups.add(group)
+user.groups.add(perm_group)
 user.auth0_user_id = <Auth0|user_id>
 user.save()
 ```
