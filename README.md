@@ -27,7 +27,7 @@ user.groups.add(perm_group)
 user.auth0_user_id = <Auth0|user_id>
 user.save()
 ```
-6. Create an API in auth0 and create a client application (with auth0 database connection and enabled access to the API in the apps settings).
+6. In your Auth0 dashboard create an API and a client application (with auth0 database connection and enabled access to the API in the apps settings).
 8. run `python3 manage.py runserver` to run API locally on port 8000 at http://127.0.0.1:8000/.
 
 ## Adding new endpoints
@@ -84,8 +84,8 @@ class StationsViewSet(AccessViewSetMixin, PermissionedModelViewSet):
 ```
 
 ## Auth0 Integration admin information
-Everytime a new user requests direct API access, a new m2m client application with client credential grant type must enabled must be created in Auth0 either using the Auth0ManagementAPI or in the web dashboard.
-Furthermore since access tokens using client-credentials flow are not connected to the client app and do not have any direct link any auth0 user we must also supply the new client application metadata with the following keys
+Everytime a new user requests direct API access, a new m2m client application with client credential grant type enabled must be created in Auth0 either using the Auth0ManagementAPI or in the web dashboard.
+Furthermore since access tokens using client-credentials flow are not connected to the client app and do not have any direct link to any auth0 user we must also supply the new client application metadata with the following keys
 so that Django knows which user to authenticate and pass to the request.user object during authentication in the custom Auth0 authentication backend. A new Client m2m app is not required for new users authenticating to the API via a SPA (vue.js/react.js) since the Authorization flow is used and the user information is passed during the flow.
 
 **user_email**: 'dummy@dummy.com' <br />
