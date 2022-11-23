@@ -3,7 +3,12 @@ from rest_framework import serializers
 from api.models import *
 from django.core.validators import validate_comma_separated_integer_list
 
+#--------------- AuthSerializer ----------------------
 
+class AuthSerializer(serializers.Serializer):
+    client_id = serializers.CharField()
+    client_secret = serializers.CharField()
+    
 
 #---------- Organizations ------------------
 
