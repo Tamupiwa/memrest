@@ -1,5 +1,5 @@
 # Memrest
-Memrest is a barebones Django REST API that allows you to quickly get a REST API up and runnning with Users, Organizations, Memberships, role scoped endpoint permissions and role scoped resource partitioning along with Oauth 2.0 authentication using an Auth0 Identity Server. 
+Memrest is a barebones Django REST API that allows you to quickly get a REST API up and runnning with Users, Organizations, Memberships, role scoped endpoint access controls & resource partitioning along with Oauth 2.0 authentication using an Auth0 Identity Server. 
 
 ## Design Philosophy
 Memrest uses a layered design so all permissioning, business logic, Models/Data are seperated in different layers 
