@@ -13,6 +13,95 @@ import os
 import string
 import random
 
+'''
+Handles logic for the user endpoint
+
+'''
+class UserService(BaseService):
+    def __init__(self, request=None, queryset=None, permissed_orgs=None):
+        self.request = request
+        self.scoped_queryset = queryset
+        self.permissed_orgs = permissed_orgs
+
+    #returns all users of a users organization
+    def all(self):
+        return self.scoped_queryset
+
+    #creates a new user in db and in auth0
+    def create(self, email, password, first_name, last_name, organization_id, role, is_key_contact):
+        client_id = os.environ.get('AUTH0_CLIENT_ID')
+        client_secret = os.environ.get('AUTH0_CLIENT_SECRET')
+        domain = os.environ.get('AUTH0_DOMAIN')
+        ath = Auth0ManagmentAPI(client_id, client_secret, domain)
+        auth0_user_id = (ath.create_user(email=email, password=password,
+                                        validate_email=True))
+        user = (User.objects.create_user(first_name=first_name, last_name=last_name, role=role,
+                                        is_key_contact=is_key_contact, auth0_id=auth0_user_id))
+        organization = organization.objects.get(id=organization_id)
+        user.organization.add(role=role, is_key_contact=is_key_contact)
+        return user
+
+    #return a specific user if their within their organization
+    def get(self, user_id):
+        if not self.scoped_queryset:
+            return False
+            
+        user = self.scoped_queryset.filter(id=user_id)
+        if user.exists():
+            return user[0]
+        else:
+            return False
+    
+    #returns a user if it belongs to a users organizations otherwise raises an error 
+    def get_or_raise(self, user_id):
+        user = self.get(user_id)
+        if not user:
+            raise NotFound('User not found.')
+        
+        return user
+
+    def update(self, user_id, validated_data):
+        instance = self.get_or_raise(user_id)
+        for key, value in validated_data.items():
+            setattr(instance, key, value)
+
+        instance.save()
+        return instance
+
+    #deletes a user 
+    def delete(self, user_id):
+        with transaction.atomic():
+            #validate user exists
+            user = self.get_or_raise(user_id)
+            #validates user isnt the sole admin in any of their organizations, 
+            # if they are do not allow user to be deleted until they asign admin to someone else or if 
+            # the entire organization is being deleted (archived)
+            self.validate_not_sole_admin(user_id)
+            client_id = os.environ.get('AUTH0_CLIENT_ID')
+            client_secret = os.environ.get('AUTH0_CLIENT_SECRET')
+            ath = Auth0ManagmentAPI(client_id, client_secret)
+            ath.delete_user(user.auth0_id)
+            user.delete()
+    
+    #checks if user is within an organization that is archived
+    def unarchived_queryset(self, queryset):
+        archived_orgs_users = User.objects.filter(organizations__archived=True).values_list('id', flat=True)
+        return queryset.exclude(id__in=archived_orgs_users)
+
+    #returns all organizations
+    def all_organizations(self, user_id):
+        organization_ids = OrganizationMembership.objects.filter(user__id=user_id).values_list(organization__id, flat=True)
+        return Organization.objects.filter(id__in=organization_ids)
+
+    #checks if user is the sole admin in any of their organizations 
+    def validate_not_sole_admin(self, user_id):
+        #get all organizations that the user is an admin for
+        users_admin_orgs = OrganizationMembership.objects.filter(role='admin').values_list('organization_id')
+        for org_id in users_admin_orgs:
+            if len(OrganizationMembership.objects.filter(organization_id=org_id, role='admin') == 1):
+                raise ParseError('User cannot be deleted if they are the sole admin of an organization, another admin must be assigned first.')
+                
+                
 class OrganizationService(BaseService):
     def __init__(self, request=None, queryset=None, permissed_orgs=None):
         self.request = request
