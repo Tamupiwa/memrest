@@ -75,7 +75,7 @@ class BooksAccessPolicy(AccessPolicy, BaseAccessPolicy):
         return organizations
    
    
-class StationsViewSet(AccessViewSetMixin, PermissionedModelViewSet):
+class BooksViewSet(AccessViewSetMixin, PermissionedModelViewSet):
     access_policy = BooksAccessPolicy
     
     def list(self, request):
