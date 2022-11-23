@@ -12,7 +12,6 @@ from api.models import User
 
 User = get_user_model()
 
-
 def is_valid_auth0token(token):
     # TODO: remove request and make the `json` file as part of the project to save the request time
     resp = requests.get('https://'+settings.AUTH0_DOMAIN +
@@ -43,7 +42,7 @@ def is_valid_auth0token(token):
             raise exceptions.AuthenticationFailed('token is expired')
         except jwt.JWTClaimsError:
             raise exceptions.AuthenticationFailed(
-                'incorrect claims, please check the audience and issuer'
+                'incorrect claims, please check the audience and issuer',
             )
         except Exception as e:
             raise exceptions.AuthenticationFailed(
@@ -95,14 +94,18 @@ class Auth0TokenAuthentication(BaseAuthentication):
         if not is_valid:
             raise exceptions.AuthenticationFailed(self.err_msg)
 
-
         grant_type = payload['gty']
         #if this is for a client credentials flow it will not have a user so we get the admin user the client application is assigned to
         if grant_type == 'client-credentials':
             client_id = payload['azp']
-            client_meta_data = get_auth0_client_application_meta_data(client_id)
-            auth0_email = client_meta_data['user_email']
-            auth0_user_id = client_meta_data['auth0_user_id']
+            auth0_email = payload.get('auth0_user_email')
+            auth0_user_id = payload.get('auth0_user_id')
+            #if the user email and user id where not passed into the token by the auth0 m2m actions script call the management API to get the details from the client app metadata
+            if not auth0_email or not auth0_user_id:
+                client_meta_data = get_auth0_client_application_meta_data(client_id)
+                auth0_email = client_meta_data['user_email']
+                auth0_user_id = client_meta_data['auth0_user_id']
+
             user = User.objects.filter(email=auth0_email, auth0_id=auth0_user_id).last()
         else:
             user_data = get_auth0_user_data(token)
