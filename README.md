@@ -87,20 +87,19 @@ class BooksViewSet(AccessViewSetMixin, PermissionedModelViewSet):
 
 ***Authentication via server (client-credentials flow)***
 
-Everytime a new user requests direct API access, a new m2m client application with client credential grant type enabled must be created in Auth0 either using the Auth0ManagementAPI or in the web dashboard.
-Furthermore since access tokens using client-credentials flow are not connected to the client app and do not have any direct link to any auth0 user we must also supply the new client application metadata with the following keys
-so that Django knows which user to authenticate and pass to the request.user object during authentication in the custom Auth0 authentication backend. A new Client m2m app is not required for new users authenticating to the API via a SPA (vue.js/react.js) since the Authorization flow is used and the user information is passed during the flow.
+If third parties want direct access to your API, a new m2m client application with client credential grant type enabled must be created in Auth0 either using the Auth0ManagementAPI or in the web dashboard.
+Furthermore since access tokens using client-credentials flow ado not have any direct link to any auth0 user we must also supply the new client application metadata with the following keys so that Django knows which user to authenticate and pass to the request.user object during authentication in the custom Auth0 authentication backend. A new Client m2m app is not required for new users authenticating to the API via a SPA (vue.js/react.js) since the Authorization flow is used and the user information is passed during the flow.
 
 >**user_email**: 'dummy@dummy.com' <br />
 >**auth0_user_id**: 'auth0|abcd123'
 
-It is recommended to abide by the followning naming convention for the application name *user_email (user_id)* <br />
-So you can easily sort each client to a user as the number of users requiring direct API integration grows <br />
+It is recommended to abide by the followning naming convention for the new client application names *user_email (user_id)* <br />.
+This is so you can easily sort each client and know which user they belong to as the number of third party users requiring direct API access grows <br />
 e.g dummy@dummy.com (52de3b66-759f-4dd8-954b-d3970576b387)
 
 ***Authentication via Single Page app (Vue.js/react.js)***
 
-Secure authentication via client side application using Authorization flow with PCKE to avoid exposing the client secret can be easily done using the Auth0 SPA SDK (https://auth0.com/docs/libraries/auth0-single-page-app-sdk)
+If you are only consuming the API from a front-end client you own Secure authentication via client side application using Authorization flow with PCKE to avoid exposing the client secret can be easily done by creating a single page client application in the Auth0 dashboard and using the Auth0 SPA SDK (https://auth0.com/docs/libraries/auth0-single-page-app-sdk) to authenticate and make calls to the API.
 
 
 ## Dependencies
