@@ -83,9 +83,9 @@ class StationsViewSet(AccessViewSetMixin, PermissionedModelViewSet):
   
 ```
 
-## Auth0 Integration admin information
+## Auth0 Authentication Admin Information
 
-**Authentication via server (client-credentials flow)**
+***Authentication via server (client-credentials flow)***
 
 Everytime a new user requests direct API access, a new m2m client application with client credential grant type enabled must be created in Auth0 either using the Auth0ManagementAPI or in the web dashboard.
 Furthermore since access tokens using client-credentials flow are not connected to the client app and do not have any direct link to any auth0 user we must also supply the new client application metadata with the following keys
@@ -98,7 +98,7 @@ It is recommended to abide by the followning naming convention for the applicati
 So you can easily sort each client to a user as the number of users requiring direct API integration grows <br />
 e.g dummy@dummy.com (52de3b66-759f-4dd8-954b-d3970576b387)
 
-**Authentication via Single Page app (Vue.js/react.js)**
+***Authentication via Single Page app (Vue.js/react.js)***
 
 Secure authentication via client side application using Authorization flow with PCKE to avoid exposing the client secret can be easily done using the Auth0 SPA SDK (https://auth0.com/docs/libraries/auth0-single-page-app-sdk)
 
