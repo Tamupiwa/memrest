@@ -56,7 +56,8 @@ class ModelViewSet_(viewsets.ModelViewSet):
         #get all users organizatins 
         users = service.all()
         data = serializers.UserSerializer(users, many=True).data
-        return Response(data, status=200, content_type='application/json')
+        data = self.paginate_queryset(data)
+        return self.get_paginated_response(data)
 
     #retrieves a user
     def retrieve(self, request, pk):
@@ -92,7 +93,8 @@ class OrganizationsViewSet(AccessViewSetMixin, ModelViewSet_):
         service = services.organizations.OrganizationService(self.request, self.queryset)
         organizations = service.all()
         data = serializers.OrganizationSerializer(organizations, many=True).data
-        return Response(data, status=200, content_type='application/json')
+        data = self.paginate_queryset(data)
+        return self.get_paginated_response(data)
 
     #creates a new organization
     def create(self, request):
@@ -144,7 +146,8 @@ class OrganizationMembershipViewSet(AccessViewSetMixin, PermissionedModelViewSet
         service = services.organization_memberships.OrganizationMembershipService(self.request, self.queryset)
         memberships = service.all(serializer.validated_data)
         data = serializers.OrganizationMembershipSerializer(memberships, many=True).data
-        return Response(data, status=200, content_type='application/json')
+        data = self.paginate_queryset(data)
+        return self.get_paginated_response(data)
 
     #creates organization membership and sends an invite email to the user
     def create(self, request):
