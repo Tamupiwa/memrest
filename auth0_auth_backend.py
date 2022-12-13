@@ -94,7 +94,7 @@ class Auth0TokenAuthentication(BaseAuthentication):
         if not is_valid:
             raise exceptions.AuthenticationFailed(self.err_msg)
 
-        grant_type = payload['gty']
+        grant_type = payload.get('gty')
         #if this is for a client credentials flow it will not have a user so we get the admin user the client application is assigned to
         if grant_type == 'client-credentials':
             client_id = payload['azp']
